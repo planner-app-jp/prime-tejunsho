@@ -581,6 +581,18 @@
 <input type="file" id="photoInput" accept="image/*">
 <input type="file" id="cameraInput" accept="image/*" capture="environment">
 <input type="file" id="importInput" accept="application/json,.json">
+<canvas id="cameraCanvas" style="display:none;"></canvas>
+
+<!-- アプリ内カメラ（シャッター音なし） -->
+<div id="inAppCamera" style="display:none;position:fixed;inset:0;z-index:600;background:#000;flex-direction:column;">
+  <video id="cameraVideo" style="width:100%;height:100%;object-fit:cover;" playsinline muted></video>
+  <div style="position:absolute;top:env(safe-area-inset-top,16px);left:16px;">
+    <button id="cameraCancelBtn" style="background:rgba(0,0,0,.5);border:none;color:#fff;font-size:22px;width:44px;height:44px;border-radius:50%;cursor:pointer;">✕</button>
+  </div>
+  <div style="position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 32px);left:0;right:0;display:flex;justify-content:center;align-items:center;">
+    <button id="cameraShootBtn" style="width:72px;height:72px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.4);cursor:pointer;box-shadow:0 0 0 3px #fff;"></button>
+  </div>
+</div>
 
 <!-- 写真ソース選択シート -->
 <div class="overlay hidden" id="photoSourceSheet" style="z-index:500;">
@@ -1617,7 +1629,38 @@ function pickPhoto(st,sub){
   pendingPhotoTarget={st,sub};
   showSheet("photoSourceSheet");
 }
-$("psCameraBtn").onclick=()=>{ hideSheets(); $("cameraInput").value=""; $("cameraInput").click(); };
+/* ===== アプリ内カメラ（シャッター音なし） ===== */
+let _camStream=null;
+async function openInAppCamera(){
+  const el=$("inAppCamera"); el.style.display="flex";
+  try{
+    _camStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:"environment",width:{ideal:1920},height:{ideal:1080}},audio:false
+    });
+    const v=$("cameraVideo"); v.srcObject=_camStream; await v.play();
+  }catch(e){
+    closeInAppCamera();
+    toast("カメラを起動できませんでした");
+    $("cameraInput").value=""; $("cameraInput").click();
+  }
+}
+function closeInAppCamera(){
+  if(_camStream){ _camStream.getTracks().forEach(t=>t.stop()); _camStream=null; }
+  $("inAppCamera").style.display="none";
+}
+$("cameraCancelBtn").onclick=closeInAppCamera;
+$("cameraShootBtn").onclick=()=>{
+  const v=$("cameraVideo");
+  const cv=$("cameraCanvas");
+  cv.width=v.videoWidth; cv.height=v.videoHeight;
+  cv.getContext("2d").drawImage(v,0,0);
+  closeInAppCamera();
+  cv.toBlob(blob=>{
+    if(!blob){ toast("撮影に失敗しました"); return; }
+    handlePhotoFile(new File([blob],"camera.jpg",{type:"image/jpeg"}),true);
+  },"image/jpeg",0.92);
+};
+$("psCameraBtn").onclick=()=>{ hideSheets(); openInAppCamera(); };
 $("psGalleryBtn").onclick=()=>{ hideSheets(); $("photoInput").value=""; $("photoInput").click(); };
 
 async function saveOriginalToDevice(dataUrl){
