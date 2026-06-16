@@ -1,0 +1,14 @@
+{
+  "name": "プライム手順書",
+  "short_name": "手順書",
+  "description": "工程ごとの写真付き手順書をスマホで作成・更新",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f6f9",
+  "theme_color": "#1f6feb",
+  "icons": [
+    { "src": "icon.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" },
+    { "src": "icon.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any" }
+  ]
+}

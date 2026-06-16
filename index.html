@@ -1,0 +1,3020 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1f6feb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>プライム手順書</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.jpg">
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --ink:#1a2230; --muted:#6b7686;
+    --line:#e3e8ef; --accent:#1f6feb; --accent-soft:#e8f1ff;
+    --prime:#e8590c; --prime-soft:#fff1e8; --prime-line:#f2a878;
+    --pc:#1971c2; --pc-soft:#e7f1fb; --pc-line:#8cbce8;
+    --normal:#495057; --normal-soft:#eef1f4; --normal-line:#c4ccd6;
+    --yellow:#b87800; --yellow-soft:#fff8db; --yellow-line:#ffd43b;
+    --danger:#e03131; --ok:#2f9e44;
+    --shadow:0 1px 3px rgba(20,30,50,.08),0 4px 16px rgba(20,30,50,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;
+    background:var(--bg); color:var(--ink); font-size:15px; line-height:1.6;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  input,textarea{font-family:inherit;font-size:16px;}
+
+  /* ===== ヘッダー ===== */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:50;background:var(--accent);color:#fff;
+    padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;
+    box-shadow:0 2px 10px rgba(31,111,235,.25);
+  }
+  .head-row{display:flex;align-items:center;gap:10px;}
+  .head-row h1{font-size:17px;font-weight:700;margin:0;flex:1;letter-spacing:.02em;}
+  .head-btn{
+    background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:9px;
+    padding:7px 11px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;
+  }
+  .head-btn:active{background:rgba(255,255,255,.32);}
+  .head-btn.edit-active{background:rgba(255,255,255,.40);box-shadow:0 0 0 2px rgba(255,255,255,.5);}
+  .head-btn.cancel-btn{background:rgba(255,80,80,.35);}
+  .head-sub{font-size:11px;opacity:.9;margin-top:2px;}
+  .step-title-view{flex:1;font-size:15.5px;font-weight:700;color:var(--ink);padding:3px 0;cursor:text;}
+  .step-text-view{font-size:15px;line-height:1.7;color:var(--ink);min-height:20px;cursor:text;word-break:break-word;}
+  .rich-editor{min-height:48px;padding:4px 0;outline:none;font-size:15px;line-height:1.7;color:var(--ink);-webkit-user-select:text;user-select:text;word-break:break-word;}
+  .rich-editor:empty::before{content:"説明を入力…";color:var(--muted);opacity:.5;font-style:italic;pointer-events:none;}
+  .fmt-btn.black{color:#333;border-color:#ccc;}
+  .tap-edit:hover{outline:1.5px dashed var(--accent);outline-offset:3px;border-radius:4px;}
+  .tap-placeholder{color:var(--muted);opacity:.4;font-style:italic;}
+  .step-photo-none{margin:11px 13px 4px;padding:10px;text-align:center;color:var(--line);font-size:13px;}
+
+  /* ===== 工程タブバー ===== */
+  .tabbar{
+    position:fixed;left:0;right:0;z-index:40;
+    display:flex;gap:7px;overflow-x:auto;padding:10px 12px;background:var(--panel);
+    border-bottom:1px solid var(--line);scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .tabbar::-webkit-scrollbar{display:none;}
+  .ptab{
+    flex:0 0 auto;border:1.5px solid var(--normal-line);background:var(--panel);
+    color:var(--normal);border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:700;
+    white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:.12s;
+    user-select:none;-webkit-user-select:none;
+  }
+  .ptab .pnum{font-size:11px;opacity:.6;font-weight:700;}
+  .ptab.type-prime{border-color:var(--prime-line);color:var(--prime);background:var(--prime-soft);}
+  .ptab.type-pc{border-color:var(--pc-line);color:var(--pc);background:var(--pc-soft);}
+  .ptab.type-yellow{border-color:var(--yellow-line);color:var(--yellow);background:var(--yellow-soft);}
+  .ptab.active{box-shadow:0 0 0 2px currentColor inset;}
+  .ptab.active.type-normal{background:#fff;}
+  .ptab-add{
+    flex:0 0 auto;border:1.5px dashed var(--accent);background:var(--accent-soft);color:var(--accent);
+    border-radius:999px;padding:8px 13px;font-size:14px;font-weight:700;white-space:nowrap;
+  }
+  .ptab.dragging-src{ opacity:0 !important; pointer-events:none !important; width:4px !important; min-width:4px !important; padding:0 !important; overflow:hidden !important; }
+  .tab-insert-indicator{ position:absolute;top:50%;transform:translateY(-50%);width:4px;height:36px;background:var(--accent);border-radius:3px;pointer-events:none;z-index:50;transition:left .08s; }
+
+  /* 工程ヘッダー帯 */
+  .process-head{
+    position:fixed;left:0;right:0;z-index:35;
+    background:var(--panel);padding:6px 14px 0;border-bottom:1px solid var(--line);
+  }
+  .process-title-row{display:flex;align-items:center;gap:9px;margin-bottom:4px;overflow:hidden;max-height:60px;transition:max-height .2s ease,opacity .2s ease,margin .2s ease;}
+  #processHead.head-collapsed .process-title-row,
+  #processHead.head-collapsed #procFlowRow{max-height:0;opacity:0;margin:0;pointer-events:none;}
+  #procFlowRow{overflow:hidden;max-height:60px;transition:max-height .2s ease,opacity .2s ease;}
+  #processHead.proc-flow-collapsed #procFlowRow{max-height:0!important;opacity:0!important;margin:0!important;pointer-events:none;}
+  .proc-flow-chevron{font-size:11px;color:var(--accent);font-weight:700;padding:2px 6px;transition:transform .18s ease;flex-shrink:0;cursor:pointer;}
+  #processHead.proc-flow-collapsed .proc-flow-chevron{transform:rotate(-90deg);}
+  .process-badge{
+    font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;white-space:nowrap;
+  }
+  .process-badge.type-prime{background:var(--prime-soft);color:var(--prime);}
+  .process-badge.type-pc{background:var(--pc-soft);color:var(--pc);}
+  .process-badge.type-normal{background:var(--normal-soft);color:var(--normal);}
+  .process-badge.type-yellow{background:var(--yellow-soft);color:var(--yellow);}
+  .process-title{font-size:18px;font-weight:800;flex:1;}
+  .process-meta{font-size:11px;color:var(--muted);}
+  .process-title-input{
+    flex:1;border:none;font-size:18px;font-weight:800;color:var(--ink);background:none;padding:0;
+    border-bottom:1.5px solid var(--accent);min-width:0;
+  }
+  .process-title-input:focus{outline:none;}
+  .stab-name-input{
+    border:none;background:none;font-size:14px;font-weight:700;color:inherit;
+    padding:0;width:auto;max-width:140px;min-width:20px;
+  }
+  .stab-name-input:focus{outline:none;border-bottom:1px solid var(--accent);}
+  .proc-flow-view{font-size:12.5px;color:var(--muted);padding:0 14px 0;line-height:1.4;white-space:pre-wrap;}
+  .proc-flow-input{
+    width:100%;border:none;border-bottom:1px solid var(--line);background:none;
+    font-size:12.5px;color:var(--ink);padding:4px 14px 6px;resize:none;line-height:1.5;
+    box-sizing:border-box;
+  }
+  .proc-flow-input:focus{outline:none;border-bottom-color:var(--accent);}
+  .proc-flow-input::placeholder{color:#b6bfcb;}
+  .icon-btn{
+    background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);
+    width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;
+  }
+  .icon-btn:active{background:var(--bg);}
+
+  /* サブタブ */
+  .subtabbar{display:flex;gap:6px;overflow-x:auto;padding:10px 0 0;scrollbar-width:none;}
+  .subtabbar::-webkit-scrollbar{display:none;}
+  .stab{
+    flex:0 0 auto;border:none;border-bottom:2.5px solid transparent;background:none;
+    color:var(--muted);padding:7px 5px 9px;font-size:14px;font-weight:700;white-space:nowrap;
+    user-select:none;-webkit-user-select:none;
+  }
+  .stab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .stab-add{flex:0 0 auto;border:none;background:none;color:var(--accent);padding:7px 8px 9px;font-size:15px;font-weight:700;}
+  .stab.stab-drag-src{opacity:0!important;pointer-events:none!important;width:4px!important;min-width:4px!important;padding:0!important;overflow:hidden!important;}
+  .stab-insert-indicator{position:absolute;top:50%;transform:translateY(-50%);width:4px;height:28px;background:var(--accent);border-radius:3px;pointer-events:none;z-index:50;}
+
+  /* ===== コンテンツ ===== */
+  .content{
+    position:fixed;left:0;right:0;bottom:0;z-index:0;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:14px 12px calc(env(safe-area-inset-bottom) + 40px);
+  }
+  .empty{
+    text-align:center;color:var(--muted);padding:50px 20px;font-size:14px;line-height:2;
+  }
+
+  /* 手順ステップ */
+  .step{
+    background:var(--panel);border-radius:14px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;
+  }
+  .step-top{display:flex;align-items:center;gap:8px;padding:11px 13px 0;}
+  .step-num{
+    background:var(--accent);color:#fff;width:25px;height:25px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;
+  }
+  .step-title-in{
+    flex:1;border:none;font-size:15.5px;font-weight:700;color:var(--ink);background:none;padding:3px 0;
+  }
+  .step-title-in:focus{outline:none;}
+  .step-photo-wrap{position:relative;margin:11px 0 0;background:#0d1117;}
+  .step-photo{display:block;width:100%;max-height:420px;object-fit:contain;}
+  .anno-layer{position:absolute;inset:0;pointer-events:none;}
+  /* サムネイル＋テキスト横並び（閲覧モード） */
+  .step-media-row{display:flex;gap:10px;padding:10px 13px 13px;align-items:flex-start;}
+  .step-thumb-col{flex:0 0 auto;}
+  .step-thumb{
+    width:110px;height:90px;object-fit:cover;border-radius:9px;
+    display:block;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.18);
+    transition:opacity .12s;
+  }
+  .step-thumb:active{opacity:.75;}
+  .step-text-col{flex:1;min-width:0;}
+  .step-photo-empty{
+    margin:11px 13px 0;border:2px dashed var(--line);border-radius:11px;padding:26px;text-align:center;
+    color:var(--muted);font-size:13px;
+  }
+  .step-body{padding:11px 13px 13px;}
+  .step-text{
+    width:100%;border:none;resize:none;font-size:15px;line-height:1.7;color:var(--ink);
+    background:none;min-height:24px;padding:0;
+  }
+  .step-text:focus{outline:none;}
+  .step-text::placeholder{color:#b6bfcb;}
+  .step-foot{
+    display:flex;align-items:center;gap:8px;padding:9px 13px;border-top:1px solid var(--line);
+    background:#fafbfc;
+  }
+  .step-date{font-size:11px;color:var(--muted);flex:1;}
+  .step-chevron{font-size:13px;color:var(--accent);flex-shrink:0;padding:2px 6px 2px 4px;transition:transform .18s ease;font-weight:700;}
+  .step-collapsed .step-chevron{transform:rotate(-90deg);}
+  .step-collapsed .step-top{padding-bottom:11px;}
+  .step-collapsed .step-body,.step-collapsed .step-media-row,.step-collapsed .step-photo-wrap,
+  .step-collapsed .step-photo-empty,.step-collapsed .substep-area,.step-collapsed .step-foot{display:none;}
+  .mini-btn{
+    border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 11px;
+    font-size:12.5px;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:4px;
+  }
+  .mini-btn:active{background:var(--bg);}
+  .mini-btn.photo{color:var(--accent);border-color:var(--accent-soft);background:var(--accent-soft);}
+  .mini-btn.del{color:var(--danger);}
+
+  .add-step-btn{
+    width:100%;border:2px dashed var(--accent);background:var(--accent-soft);color:var(--accent);
+    border-radius:13px;padding:15px;font-size:15px;font-weight:700;margin-top:2px;
+  }
+  .add-step-btn:active{background:#daeaff;}
+
+  /* サブ手順 */
+  .substep-area{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line);}
+  .substep{background:#f5f7fb;border-left:3px solid var(--accent);}
+  .substep+.substep{border-top:1px solid #e2e8f0;}
+  .substep-top{display:flex;align-items:center;gap:7px;padding:8px 13px 0;}
+  .substep-num{background:var(--accent-soft);color:var(--accent);border-radius:7px;padding:2px 8px;font-size:11.5px;font-weight:800;flex-shrink:0;}
+  .substep-title-view{flex:1;font-size:14px;font-weight:700;color:var(--ink);padding:2px 0;cursor:text;}
+  .substep-title-in{flex:1;border:none;font-size:14px;font-weight:700;color:var(--ink);background:none;padding:2px 0;}
+  .substep-title-in:focus{outline:none;}
+  .substep-body{padding:6px 13px 9px;}
+  .substep-foot{display:flex;align-items:center;gap:6px;padding:7px 13px;border-top:1px solid var(--line);background:#eef1f6;}
+  .add-substep-btn{width:100%;border:none;border-top:1px dashed var(--line);background:#f7f9fc;color:var(--muted);padding:8px 13px 8px 32px;font-size:12.5px;font-weight:600;text-align:left;display:flex;align-items:center;gap:5px;cursor:pointer;}
+  .add-substep-btn:active{background:#e8f1ff;color:var(--accent);}
+  .drag-handle{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;}
+  .drag-handle:active{cursor:grabbing;}
+  body.dragging,.dragging *{user-select:none;-webkit-user-select:none;}
+  .drag-placeholder{background:#eff6ff;border:2px dashed var(--accent);border-radius:8px;box-sizing:border-box;}
+
+  /* チェックボックス */
+  .chk-btn{width:26px;height:26px;border-radius:50%;border:2px solid #c8d0dc;background:#fff;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:all .15s;margin-left:auto;}
+  .chk-btn.checked{border-color:#22c55e;background:#22c55e;color:#fff;}
+  .step.checked{background:#f0fdf4;}
+  .step.checked .step-num{background:#22c55e;}
+  .step.substeps-complete .step-num{background:#22c55e;}
+  .substep.checked{background:#f0fdf4;}
+  .substep.checked .substep-num{background:#bbf7d0;color:#15803d;}
+  .check-reset-bar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;}
+  .check-reset-btn{border:1px solid #c8d0dc;background:#fff;border-radius:9px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#6b7280;cursor:pointer;}
+  .check-reset-btn:active{background:#f3f4f6;}
+
+  /* 業者メモ */
+  .vendor-card{
+    background:var(--panel);border-radius:14px;box-shadow:var(--shadow);margin:18px 0 0;overflow:hidden;
+    border-top:3px solid #f0a500;
+  }
+  .vendor-head{display:flex;align-items:center;gap:8px;padding:13px 14px;font-weight:800;font-size:15px;}
+  .vendor-head .ic{font-size:17px;}
+  .vendor-list{padding:0 14px 6px;}
+  .vendor-item{border-top:1px solid var(--line);padding:11px 0;}
+  .vendor-item:first-child{border-top:none;}
+  .vendor-name{font-weight:700;font-size:14px;color:#b06800;display:flex;align-items:center;gap:7px;}
+  .vendor-name .del{margin-left:auto;color:var(--danger);background:none;border:none;font-size:13px;}
+  .vendor-note-txt{font-size:14px;color:var(--ink);margin-top:4px;white-space:pre-wrap;}
+  .vendor-add{
+    width:100%;border:none;border-top:1px solid var(--line);background:none;color:#b06800;
+    padding:13px;font-size:14px;font-weight:700;
+  }
+
+  /* ===== モーダル共通 ===== */
+  .overlay{
+    position:fixed;inset:0;background:rgba(13,17,23,.55);z-index:200;display:flex;
+    align-items:flex-end;justify-content:center;padding:0;
+  }
+  .overlay.hidden{display:none;}
+  .sheet{
+    background:var(--panel);width:100%;max-width:560px;border-radius:18px 18px 0 0;
+    max-height:92vh;overflow-y:auto;padding:6px 0 calc(env(safe-area-inset-bottom) + 14px);
+    animation:slideup .22s ease;
+  }
+  @keyframes slideup{from{transform:translateY(40px);opacity:.6;}to{transform:translateY(0);opacity:1;}}
+  .sheet-grip{width:38px;height:4px;background:var(--line);border-radius:99px;margin:8px auto 4px;}
+  .sheet-head{display:flex;align-items:center;padding:6px 16px 12px;}
+  .sheet-head h3{font-size:16px;font-weight:800;margin:0;flex:1;}
+  .sheet-head .close{background:none;border:none;font-size:22px;color:var(--muted);line-height:1;padding:0 4px;}
+  .sheet-body{padding:0 16px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+  .field input[type=text],.field textarea{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:16px;background:#fff;
+  }
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);}
+  .field textarea{resize:vertical;min-height:70px;line-height:1.6;}
+  .type-pick{display:flex;gap:8px;}
+  .type-opt{
+    flex:1;border:1.5px solid var(--line);border-radius:10px;padding:11px 6px;text-align:center;
+    font-size:13px;font-weight:700;color:var(--muted);background:#fff;
+  }
+  .type-opt.sel.normal{border-color:var(--normal);color:var(--normal);background:var(--normal-soft);}
+  .type-opt.sel.prime{border-color:var(--prime);color:var(--prime);background:var(--prime-soft);}
+  .type-opt.sel.pc{border-color:var(--pc);color:var(--pc);background:var(--pc-soft);}
+  .type-opt.sel.yellow{border-color:var(--yellow);color:var(--yellow);background:var(--yellow-soft);}
+  .sheet-actions{display:flex;gap:10px;padding:16px 16px 4px;}
+  .btn-primary{
+    flex:1;background:var(--accent);color:#fff;border:none;border-radius:11px;padding:13px;
+    font-size:15px;font-weight:700;
+  }
+  .btn-primary:active{background:#1858c4;}
+  .btn-ghost{
+    background:none;border:1.5px solid var(--line);color:var(--ink);border-radius:11px;padding:13px 18px;
+    font-size:15px;font-weight:700;
+  }
+  .btn-danger{color:var(--danger);border:1.5px solid #f3c0c0;background:#fff5f5;border-radius:11px;padding:13px 18px;font-size:15px;font-weight:700;}
+  .menu-item{
+    display:flex;align-items:center;gap:12px;padding:15px 16px;font-size:15px;font-weight:600;
+    border-bottom:1px solid var(--line);background:none;border:none;width:100%;text-align:left;color:var(--ink);
+  }
+  .menu-item .ic{font-size:19px;width:24px;text-align:center;}
+  .menu-item:active{background:var(--bg);}
+  .menu-item.danger{color:var(--danger);}
+  .menu-note{font-size:11px;color:var(--muted);padding:10px 16px;line-height:1.6;}
+
+  /* ===== 注釈エディタ ===== */
+  .anno-overlay{
+    position:fixed;inset:0;background:#0d1117;z-index:300;display:flex;flex-direction:column;
+  }
+  .anno-overlay.hidden{display:none;}
+  .anno-top{
+    display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;
+    background:#161b22;color:#fff;
+  }
+  .anno-top h3{font-size:15px;font-weight:700;margin:0;flex:1;}
+  .anno-top button{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:8px 13px;font-size:14px;font-weight:700;}
+  .anno-top button.save{background:var(--ok);}
+  .anno-stage-wrap{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:8px;}
+  .anno-stage{position:relative;display:inline-block;max-width:100%;max-height:100%;touch-action:none;}
+  .anno-stage img{display:block;max-width:100%;max-height:78vh;object-fit:contain;}
+  .anno-mark{
+    position:absolute;transform:translate(-50%,-50%);pointer-events:auto;cursor:move;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .anno-mark.circle{border:3px solid #ff2222;border-radius:50%;background:transparent;}
+  .anno-mark.rect{border:3px solid #ff2222;background:transparent;border-radius:2px;box-sizing:border-box;}
+  .anno-mark.num{
+    background:#ff2222;color:#fff;border-radius:50%;font-weight:800;border:2px solid #fff;
+    box-shadow:0 0 0 1px #ff2222;
+  }
+  .anno-mark.text{color:#ff2222;font-weight:800;text-shadow:0 0 3px #fff,0 0 3px #fff,0 1px 2px rgba(0,0,0,.3);white-space:nowrap;}
+  .anno-mark.arrow{color:#ff2222;font-weight:900;text-shadow:0 0 3px #fff;}
+  .anno-mark.selected{outline:2px dashed #4dabf7;outline-offset:3px;}
+  /* 書式ツールバー */
+  .fmt-bar{display:flex;gap:6px;padding:5px 6px;background:#f0f4fb;border-radius:8px;margin-bottom:5px;flex-wrap:wrap;border:1px solid var(--line);}
+  .fmt-btn{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;}
+  .fmt-btn:active{background:var(--bg);}
+  .fmt-btn.red{color:#e03131;border-color:#ffc9c9;}
+  .fmt-btn.blue{color:#1971c2;border-color:#a5d8ff;}
+  /* トリミングUI */
+  .crop-overlay{position:fixed;inset:0;z-index:400;background:#000;display:flex;flex-direction:column;touch-action:none;}
+  .crop-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;flex-shrink:0;}
+  .crop-btn{border:none;border-radius:20px;padding:9px 22px;font-size:15px;font-weight:700;cursor:pointer;}
+  .crop-canvas-wrap{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;}
+  .crop-hint{color:rgba(255,255,255,.6);font-size:12px;text-align:center;padding:8px;flex-shrink:0;}
+  .anno-tools{
+    display:flex;gap:6px;padding:10px 12px calc(env(safe-area-inset-bottom) + 10px);
+    background:#161b22;overflow-x:auto;scrollbar-width:none;
+  }
+  .anno-tools::-webkit-scrollbar{display:none;}
+  .anno-tool{
+    flex:0 0 auto;background:#21262d;border:none;color:#fff;border-radius:10px;padding:10px 12px;
+    font-size:13px;font-weight:700;display:inline-flex;flex-direction:column;align-items:center;gap:3px;min-width:58px;
+  }
+  .anno-tool .ic{font-size:18px;}
+  .anno-tool.danger{background:#4a1f1f;color:#ff8787;}
+  .anno-tool:disabled{opacity:.35;}
+  .anno-hint{color:#8b949e;font-size:11px;text-align:center;padding:4px 12px;background:#161b22;}
+
+  .toast{
+    position:fixed;bottom:calc(env(safe-area-inset-bottom) + 20px);left:50%;transform:translateX(-50%);
+    background:#1a2230;color:#fff;padding:11px 20px;border-radius:11px;font-size:14px;font-weight:600;
+    z-index:400;box-shadow:0 6px 24px rgba(0,0,0,.3);opacity:0;transition:opacity .2s;pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  input[type=file]{display:none;}
+
+  /* ===== ホーム画面 ===== */
+  #homeScreen{
+    position:fixed;inset:0;z-index:200;background:var(--bg);
+    overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;
+  }
+  .home-top{
+    background:var(--accent);color:#fff;
+    padding:calc(env(safe-area-inset-top)+22px) 16px 22px;
+    text-align:center;
+  }
+  .home-top h1{margin:0;font-size:22px;font-weight:800;letter-spacing:.02em;}
+  .home-top p{margin:6px 0 0;font-size:12px;opacity:.8;}
+  .home-grid{
+    display:flex;flex-direction:column;gap:10px;
+    padding:16px 14px calc(env(safe-area-inset-bottom)+24px);
+    max-width:600px;margin:0 auto;
+  }
+  .home-tile{
+    background:var(--panel);border-radius:16px;padding:16px 18px;
+    display:flex;flex-direction:row;align-items:center;gap:14px;
+    border:1.5px solid var(--line);cursor:pointer;text-align:left;
+    box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .home-tile:active{transform:scale(.97);}
+  .home-tile .tile-icon{font-size:34px;line-height:1;flex-shrink:0;}
+  .home-tile .tile-text{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
+  .home-tile .tile-name{font-size:15px;font-weight:800;color:var(--ink);}
+  .home-tile .tile-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+  .home-tile.mod-tejunsho{border-color:var(--prime-line);background:var(--prime-soft);}
+  .home-tile.mod-manual{border-color:var(--pc-line);background:var(--pc-soft);}
+  .home-tile.mod-custom-prime{border-color:var(--prime-line);background:var(--prime-soft);}
+  .home-tile.mod-custom-pc{border-color:var(--pc-line);background:var(--pc-soft);}
+  .home-tile.mod-custom-yellow{border-color:var(--yellow-line);background:var(--yellow-soft);}
+  .home-tile.mod-custom-normal{border-color:var(--normal-line);background:var(--normal-soft);}
+  .home-tile.mod-add{border-style:dashed;border-color:var(--accent);background:var(--accent-soft);}
+  .home-tile.mod-add .tile-name{color:var(--accent);}
+  .home-tile.mod-add .tile-icon{color:var(--accent);}
+  .home-tile{position:relative;}
+  .home-tile .tile-edit-badge{
+    position:absolute;top:7px;right:7px;font-size:14px;
+    background:rgba(255,255,255,.85);border-radius:50%;width:24px;height:24px;
+    display:flex;align-items:center;justify-content:center;display:none;
+  }
+  .home-edit-mode .home-tile.editable .tile-edit-badge{display:flex;}
+  .home-edit-mode .home-tile.editable{box-shadow:0 0 0 2px var(--accent);}
+  #homeEditBtn.active{background:rgba(255,255,255,.45);}
+  .icon-pick{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .icon-opt{font-size:26px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:var(--panel);cursor:pointer;}
+  .icon-opt.sel{border-color:var(--accent);background:var(--accent-soft);}
+  .color-pick{display:flex;gap:8px;margin-top:6px;}
+  .color-opt{width:36px;height:36px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:.1s;}
+  .color-opt.sel{border-color:var(--ink);transform:scale(1.15);}
+
+  /* ===== 印刷スタイル ===== */
+  @media print {
+    @page { size: A4 portrait; margin: 15mm 12mm; }
+
+    /* bodyリセット */
+    html,body { overflow:visible!important; height:auto!important; background:white!important; }
+
+    /* UI要素を非表示 */
+    header, #tabbar, #subtabbar, #homeScreen,
+    .chk-btn, .step-chevron, .proc-flow-chevron, .check-reset-btn,
+    .mini-btn, .add-step-btn, .add-substep-btn, .overlay,
+    .step-foot { display:none!important; }
+
+    /* fixed解除・通常フローに戻す */
+    #tabbar, #processHead, .content {
+      position:static!important; top:auto!important;
+      left:auto!important; right:auto!important; bottom:auto!important;
+    }
+    .content { overflow:visible!important; padding:0!important; }
+
+    /* processHead印刷スタイル */
+    #processHead {
+      box-shadow:none!important; background:white!important;
+      border-bottom:2.5px solid #1f6feb;
+      padding:0 0 4mm!important; margin-bottom:4mm;
+    }
+    /* タイトル：中央・大きく */
+    #procTitleRow {
+      justify-content:center!important; gap:10px!important;
+      margin-bottom:2mm!important;
+    }
+    .process-title { font-size:22px!important; text-align:center; }
+    .process-badge { font-size:11px!important; }
+    .proc-flow-view { font-size:12px!important; color:#444!important; text-align:center; }
+    /* 折り畳まれた説明テキストを展開 */
+    #processHead.proc-flow-collapsed #procFlowRow {
+      max-height:none!important; opacity:1!important;
+      margin:initial!important; pointer-events:auto!important;
+    }
+
+    /* サブタブ区切り */
+    .print-subtab-section + .print-subtab-section { page-break-before:always; break-before:page; }
+    .print-subtab-title {
+      font-size:14px; font-weight:700; color:var(--accent);
+      border-bottom:1px solid var(--line); padding-bottom:2mm; margin:0 0 4mm;
+    }
+
+    /* 折り畳まれたステップを全て展開 */
+    .step-collapsed .step-body,
+    .step-collapsed .step-media-row,
+    .step-collapsed .step-photo-wrap,
+    .step-collapsed .step-photo-empty,
+    .step-collapsed .substep-area { display:block!important; }
+    .step-collapsed .step-top { padding-bottom:0!important; }
+
+    /* ステップカード */
+    .step {
+      box-shadow:none!important; border:1px solid #d0d7de!important;
+      border-radius:6px!important; margin-bottom:4mm!important;
+      break-inside:avoid; page-break-inside:avoid;
+    }
+    .step-top { padding:8px 12px!important; cursor:default!important; }
+    .step-num { width:22px!important; height:22px!important; font-size:12px!important; }
+
+    /* 写真 */
+    .step-photo { max-height:200px!important; }
+    .step-thumb { width:90px!important; height:72px!important; }
+    .step-media-row { padding:8px 12px 10px!important; }
+    .step-body { padding:8px 12px 10px!important; }
+    .step-text-view { font-size:13px!important; }
+
+    /* サブ手順 */
+    .substep { break-inside:avoid; }
+    .substep-body { padding:4px 12px 8px!important; }
+
+    /* ベンダーカード */
+    .vendor-card { box-shadow:none!important; border:1px solid #d0d7de!important; break-inside:avoid; }
+    .vendor-card-empty { display:none!important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== ホーム画面 ===== -->
+<div id="homeScreen">
+  <div class="home-top">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <h1 style="margin:0;">📋 手順書管理</h1>
+      <button id="homeEditBtn" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:700;">編集</button>
+    </div>
+    <p>アプリを選んでください</p>
+  </div>
+  <div class="home-grid" id="homeGrid"></div>
+</div>
+
+<!-- ===== アプリ追加モーダル ===== -->
+<div class="overlay hidden" id="addAppSheet">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3 id="addAppSheetTitle">アプリを追加</h3><button class="close" data-close>×</button></div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>アプリ名</label>
+        <input type="text" id="addAppNameInput" placeholder="例：工事手順書" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>アイコン</label>
+        <div class="icon-pick" id="addAppIconPick">
+          <button class="icon-opt sel" data-icon="📋">📋</button>
+          <button class="icon-opt" data-icon="📝">📝</button>
+          <button class="icon-opt" data-icon="📌">📌</button>
+          <button class="icon-opt" data-icon="🗂">🗂</button>
+          <button class="icon-opt" data-icon="📁">📁</button>
+          <button class="icon-opt" data-icon="✅">✅</button>
+          <button class="icon-opt" data-icon="🔧">🔧</button>
+          <button class="icon-opt" data-icon="🏗">🏗</button>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-danger" id="addAppDelBtn" style="display:none;">削除</button>
+      <button class="btn-primary" id="addAppSaveBtn">作成</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="head-row">
+    <button class="head-btn" id="homeBtn" style="display:none;">← ホーム</button>
+    <h1 id="appTitle">プライム手順書</h1>
+    <button class="head-btn cancel-btn" id="cancelEditBtn" style="display:none;">✕ 戻る</button>
+    <button class="head-btn" id="editToggleBtn" style="display:none;">✏️ 編集</button>
+    <button class="head-btn" id="menuBtn" style="display:none;">☰</button>
+  </div>
+</header>
+
+<!-- 工程タブ -->
+<div class="tabbar" id="tabbar"></div>
+
+<!-- 工程ヘッダー -->
+<div class="process-head" id="processHead" style="display:none;">
+  <div class="process-title-row" id="procTitleRow"></div>
+  <div id="procFlowRow"></div>
+  <div class="subtabbar" id="subtabbar"></div>
+</div>
+
+<!-- コンテンツ -->
+<div class="content" id="content"></div>
+
+<!-- 各種隠しfile input -->
+<input type="file" id="photoInput" accept="image/*">
+<input type="file" id="cameraInput" accept="image/*" capture="environment">
+<input type="file" id="importInput" accept="application/json,.json">
+
+<!-- 写真ソース選択シート -->
+<div class="overlay hidden" id="photoSourceSheet" style="z-index:500;">
+  <div class="sheet" style="padding-bottom:env(safe-area-inset-bottom);">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3>写真を追加</h3><button class="close" data-close>×</button></div>
+    <div class="sheet-body" style="padding:8px 16px 16px;">
+      <button id="psCameraBtn" style="width:100%;padding:16px;font-size:16px;font-weight:700;border:none;border-radius:12px;background:var(--accent);color:#fff;margin-bottom:10px;cursor:pointer;">📷 カメラで撮影</button>
+      <button id="psGalleryBtn" style="width:100%;padding:16px;font-size:16px;font-weight:700;border:none;border-radius:12px;background:var(--panel);color:var(--ink);border:1px solid var(--line);cursor:pointer;">🖼 ライブラリから選択</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== モーダル：メニュー ===== -->
+<div class="overlay hidden" id="menuSheet">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3>メニュー</h3><button class="close" data-close>×</button></div>
+    <button class="menu-item" id="miExport"><span class="ic">📤</span>データを書き出す（バックアップ／PC用）</button>
+    <button class="menu-item" id="miImport"><span class="ic">📥</span>データを読み込む（インポート）</button>
+    <button class="menu-item" id="miPrint" style="display:none;"><span class="ic">🖨️</span>印刷する／レイアウト確認</button>
+    <button class="menu-item" id="miPptxExport" style="display:none;"><span class="ic">📑</span>PowerPointに出力する</button>
+    <button class="menu-item" id="miPptxShare" style="display:none;"><span class="ic">📧</span>PowerPointをメール・LINEで共有</button>
+    <button class="menu-item" id="miExcelExport" style="display:none;"><span class="ic">📊</span>Excelに出力する<span style="display:block;font-size:10px;color:#94a3b8;font-weight:400;">※写真のスタンプは反映されません</span></button>
+    <button class="menu-item" id="miExcelShare" style="display:none;"><span class="ic">📧</span>Excelをメール・LINEで共有<span style="display:block;font-size:10px;color:#94a3b8;font-weight:400;">※写真のスタンプは反映されません</span></button>
+    <div class="menu-note">
+      写真と手順はこの端末内（ブラウザ）に保存されます。機種変更やPCと共有するときは「書き出す」でJSONを保存し、別端末で「読み込む」と移せます。<br>
+      ホーム画面に追加するとアプリのように起動できます。<br>
+      <span id="appVersionLabel" style="color:var(--accent);font-weight:600;"></span><br>
+      <span id="docInfoLabel" style="color:var(--normal-line);font-size:12px;font-weight:400;"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== モーダル：工程の追加・編集 ===== -->
+<div class="overlay hidden" id="procSheet">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3 id="procSheetTitle">工程を追加</h3><button class="close" data-close>×</button></div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>工程名</label>
+        <input type="text" id="procNameInput" placeholder="例：受注入力" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>大まかな流れ</label>
+        <textarea id="procFlowInput" placeholder="例：依頼 → 現調 → 見積提出 → 受注" rows="2" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:14px;resize:none;box-sizing:border-box;"></textarea>
+      </div>
+      <div class="field">
+        <label>タブの色</label>
+        <div class="type-pick" id="procTypePick">
+          <button class="type-opt normal" data-type="normal">通常</button>
+          <button class="type-opt prime" data-type="prime">赤</button>
+          <button class="type-opt pc" data-type="pc">青</button>
+          <button class="type-opt yellow" data-type="yellow">黄</button>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-danger" id="procDelBtn" style="display:none;">削除</button>
+      <button class="btn-primary" id="procSaveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== モーダル：サブタブの追加・編集 ===== -->
+<div class="overlay hidden" id="subSheet">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3 id="subSheetTitle">サブタブを追加</h3><button class="close" data-close>×</button></div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>サブタブ名</label>
+        <input type="text" id="subNameInput" placeholder="例：エクセル保存手順" autocomplete="off">
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-danger" id="subDelBtn" style="display:none;">削除</button>
+      <button class="btn-primary" id="subSaveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== モーダル：業者メモ ===== -->
+<div class="overlay hidden" id="vendorSheet">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3>業者メモ</h3><button class="close" data-close>×</button></div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>業者名</label>
+        <input type="text" id="vendorNameInput" placeholder="例：○○電気" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>注意点・メモ</label>
+        <textarea id="vendorNoteInput" placeholder="この業者ならではの注意点を記入"></textarea>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-primary" id="vendorSaveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 注釈エディタ ===== -->
+<div class="anno-overlay hidden" id="annoEditor">
+  <div class="anno-top">
+    <button id="annoCancel">✕</button>
+    <h3>写真に印をつける</h3>
+    <button class="save" id="annoSave">保存</button>
+  </div>
+  <div class="anno-stage-wrap">
+    <div class="anno-stage" id="annoStage">
+      <img id="annoImg" src="" alt="">
+      <!-- marks injected here -->
+    </div>
+  </div>
+  <div class="anno-hint" id="annoHint">下のボタンで印を追加 → ドラッグで移動。印をタップで選択して削除できます。</div>
+  <div class="anno-tools">
+    <button class="anno-tool" id="atCircle"><span class="ic">⭕️</span>赤丸</button>
+    <button class="anno-tool" id="atNum"><span class="ic">①</span>番号</button>
+    <button class="anno-tool" id="atText"><span class="ic">🅰️</span>赤文字</button>
+    <button class="anno-tool" id="atArrow"><span class="ic">➡️</span>矢印</button>
+    <button class="anno-tool" id="atRect"><span class="ic">🔲</span>赤四角</button>
+    <button class="anno-tool" id="atBigger"><span class="ic">➕</span>拡大</button>
+    <button class="anno-tool" id="atSmaller"><span class="ic">➖</span>縮小</button>
+    <button class="anno-tool" id="atTaller"><span class="ic">↕</span>縦＋</button>
+    <button class="anno-tool" id="atShorter"><span class="ic">↔</span>縦－</button>
+    <button class="anno-tool danger" id="atDelete"><span class="ic">🗑</span>削除</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== 写真ライトボックス ===== -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.92);touch-action:none;overflow:hidden;">
+  <button id="lightboxClose" style="position:absolute;top:calc(env(safe-area-inset-top)+16px);right:16px;z-index:1;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:22px;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;">✕</button>
+  <div id="lightboxImgWrap" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;touch-action:none;">
+    <div id="lightboxInner" style="position:relative;display:inline-flex;align-items:center;justify-content:center;will-change:transform;transform:translateZ(0);">
+      <img id="lightboxImg" src="" style="max-width:100vw;max-height:100vh;object-fit:contain;touch-action:none;user-select:none;-webkit-user-select:none;transform-origin:center center;display:block;">
+      <div id="lightboxAnnoLayer" class="anno-layer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== トリミングUI ===== -->
+<div id="cropOverlay" class="crop-overlay" style="display:none;">
+  <div class="crop-header">
+    <button class="crop-btn" id="cropCancel" style="background:rgba(255,255,255,.2);color:#fff;">キャンセル</button>
+    <span style="color:#fff;font-weight:700;font-size:15px;">トリミング</span>
+    <button class="crop-btn" id="cropConfirm" style="background:#1f6feb;color:#fff;">切り取り</button>
+  </div>
+  <div class="crop-canvas-wrap">
+    <canvas id="cropCanvas" style="touch-action:none;"></canvas>
+  </div>
+  <div class="crop-hint">枠をドラッグして範囲を調整</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const APP_VERSION = "v4";
+
+/* ============================================================
+   モジュール定義
+   ============================================================ */
+const MODULES = {
+  tejunsho: {
+    title:"プライム手順書", dataKey:"data",
+    hasVendor:true, hasTypePick:true, hasExcel:true,
+    tabLabel:"工程", addLabel:"＋ 工程", saveErrLabel:"工程名",
+  },
+  manual: {
+    title:"マニュアル作成ツール", dataKey:"manual_data",
+    hasVendor:false, hasTypePick:false, hasExcel:true,
+    tabLabel:"マニュアル", addLabel:"＋ マニュアル", saveErrLabel:"マニュアル名",
+  },
+};
+let currentModule = null;
+let homeApps = []; // [{key, title, icon, color}] - カスタムアプリ
+
+function getModuleConfig(key){
+  if(!key) return null;
+  if(MODULES[key]) return MODULES[key];
+  const app=homeApps.find(a=>a.key===key);
+  if(app) return { ...MODULES.tejunsho, title:app.title, dataKey:`cust_${key}`, hasVendor:false, hasSubtabs:false, hasExcel:true, isCustom:true };
+  return null;
+}
+
+function seedDataCustom(title){
+  function makeStep(n){ return {id:uid(),text:`手順 ${n}`,note:"",subSteps:[]}; }
+  function makeProc(name){
+    const sub={id:uid(),name:"手順",updatedAt:nowISO(),steps:[makeStep(1),makeStep(2),makeStep(3)]};
+    return {id:uid(),name,type:"normal",updatedAt:nowISO(),flow:"",vendorNotes:[],subtabs:[sub],_subId:sub.id};
+  }
+  const procs=[makeProc(title||"手順"),makeProc("マニュアル"),makeProc("マニュアル"),makeProc("マニュアル")];
+  return {version:3,updatedAt:nowISO(),processes:procs,activeProcess:procs[0].id,activeSubtab:procs[0]._subId};
+}
+
+async function saveHomeApps(){
+  try{ await idbSet("meta","homeApps",homeApps); }catch(e){}
+}
+
+/* ============================================================
+   IndexedDB ラッパー（meta: 構造 / photos: 画像dataURL）
+   ============================================================ */
+const DB_NAME="prime_manual_db", DB_VER=1;
+let db=null;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const rq=indexedDB.open(DB_NAME,DB_VER);
+    rq.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains("meta")) d.createObjectStore("meta");
+      if(!d.objectStoreNames.contains("photos")) d.createObjectStore("photos");
+    };
+    rq.onsuccess=e=>{ db=e.target.result; res(db); };
+    rq.onerror=e=>rej(e.target.error);
+  });
+}
+function idbGet(store,key){
+  return new Promise((res,rej)=>{
+    const t=db.transaction(store,"readonly").objectStore(store).get(key);
+    t.onsuccess=()=>res(t.result); t.onerror=()=>rej(t.error);
+  });
+}
+function idbSet(store,key,val){
+  return new Promise((res,rej)=>{
+    const t=db.transaction(store,"readwrite").objectStore(store).put(val,key);
+    t.onsuccess=()=>res(); t.onerror=()=>rej(t.error);
+  });
+}
+function idbDel(store,key){
+  return new Promise((res,rej)=>{
+    const t=db.transaction(store,"readwrite").objectStore(store).delete(key);
+    t.onsuccess=()=>res(); t.onerror=()=>rej(t.error);
+  });
+}
+function idbAllPhotos(){
+  return new Promise((res,rej)=>{
+    const out={}; const st=db.transaction("photos","readonly").objectStore("photos");
+    const cur=st.openCursor();
+    cur.onsuccess=e=>{ const c=e.target.result; if(c){ out[c.key]=c.value; c.continue(); } else res(out); };
+    cur.onerror=()=>rej(cur.error);
+  });
+}
+
+/* ============================================================
+   状態
+   ============================================================ */
+let data=null;          // {version, processes:[...], activeProcess, activeSubtab}
+let photoCache={};       // photoId -> dataURL
+let editMode=false;
+const checkState={};    // checkState[subtabId][itemId] = true/false
+const collapseState={};  // collapseState[stepId] = true/false
+const procFlowCollapsed={}; // procFlowCollapsed[procId] = true/false
+let dataSnapshot=null;
+let _uidSeq=0;
+let uid=()=>"id"+Date.now().toString(36)+(++_uidSeq).toString(36);
+
+function todayStr(){
+  const d=new Date();
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;
+}
+function nowISO(){ const d=new Date(); return d.toISOString(); }
+function fmtDate(iso){
+  if(!iso) return "—";
+  const d=new Date(iso);
+  if(isNaN(d)) return iso;
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;
+}
+
+async function saveData(){
+  data.updatedAt=nowISO();
+  const key=getModuleConfig(currentModule)?.dataKey||"data";
+  try{ await idbSet("meta",key,data); }
+  catch(e){ toast("保存に失敗しました"); }
+}
+
+/* ============================================================
+   初期データ（工程の流れを全タブ自動作成）
+   ============================================================ */
+function seedData(){
+  const P=(name,type,steps,vendor,flow)=>({
+    id:uid(), name, type:type||"normal", updatedAt:nowISO(), flow:flow||"",
+    vendorNotes:vendor||[],
+    subtabs:[ { id:uid(), name:"手順", updatedAt:nowISO(),
+      steps:(steps||[]).map(t=>({id:uid(),title:t.t||"",text:t.d||"",photoId:null,annotations:[],subSteps:[],updatedAt:nowISO()})) } ]
+  });
+  const processes=[
+    P("見積もり依頼","normal",[
+      {t:"業者にメールで依頼",d:"添付：写真・図面・機器型番・設置場所。\n平日作業か休日作業かを明記する。"}
+    ]),
+    P("見積もり作成","prime",[
+      {t:"納品・スポット区分を確認",d:"原価見積書・報告写真帳・施設係修理依頼伝票を作成。"}
+    ]),
+    P("営活入力","prime",[
+      {t:"営活入力",d:"フォルダー件名確定 → フォルダー移動 → 押印依頼。"}
+    ]),
+    P("受注","prime",[
+      {t:"受注入力（件名確認）",d:"業者に依頼メール（業者見積書に文言記入してスキャンメール）。\nフォルダー移動。"},
+      {t:"請書依頼がある場合",d:"エクセルを指定フォルダーに保存する。"}
+    ]),
+    P("技術入力","prime",[
+      {t:"発・雑（税抜き）・労務費入力",d:"受注確認にチェック（確認書）。\n契約日を記入（施設からの受注メール日）。\nメモ欄記入。"}
+    ]),
+    P("発注入力","prime",[
+      {t:"発注入力",d:"業者見積書に角印を押す。"}
+    ]),
+    P("業者作業","normal",[
+      {t:"作業前確認",d:"KY実施・看板作成・ブレーカーの位置確認・工数処理。"}
+    ]),
+    P("工事写真帳作成","pc",[
+      {t:"写真帳をまとめる",d:"工事写真帳表紙・工事写真帳・作業完了証明書を作成。"}
+    ]),
+    P("施設に提出","normal",[
+      {t:"確認後に提出",d:"作業完了証明書にサイン・印鑑をもらう。"}
+    ]),
+    P("定期支払い","pc",[
+      {t:"請求書が届いたら",d:"定期支払いを実施する。"}
+    ]),
+    P("完了処理","prime",[
+      {t:"完了確認",d:"定期支払い・工数・雑費を処理していることを確認。\n経歴変更が必要か確認。完成印を押す。"},
+      {t:"経歴変更（必要時）",d:"経歴変更・抹消登録を行う。"}
+    ])
+  ];
+  return { version:3, updatedAt:nowISO(), processes, activeProcess:processes[0].id, activeSubtab:processes[0].subtabs[0].id };
+}
+
+function seedDataManual(){
+  const P=(name,steps,flow)=>({
+    id:uid(), name, type:"normal", updatedAt:nowISO(), flow:flow||"",
+    vendorNotes:[],
+    subtabs:[{id:uid(),name:"手順",updatedAt:nowISO(),
+      steps:(steps||[]).map(t=>({id:uid(),title:t.t||"",text:t.d||"",photoId:null,annotations:[],subSteps:[],updatedAt:nowISO()}))}]
+  });
+  const processes=[
+    P("サンプルマニュアル",[
+      {t:"作業前の確認",d:"必要な道具・資材が揃っているか確認する。"},
+      {t:"作業手順",d:"手順に沿って作業を進める。\n写真を撮りながら記録する。"},
+      {t:"作業後の確認",d:"作業内容を確認し、マニュアルを更新する。"}
+    ],"確認 → 作業 → 記録")
+  ];
+  return { version:3, updatedAt:nowISO(), processes, activeProcess:processes[0].id, activeSubtab:processes[0].subtabs[0].id };
+}
+
+/* ============================================================
+   参照ヘルパー
+   ============================================================ */
+function curProcess(){ return data.processes.find(p=>p.id===data.activeProcess)||data.processes[0]||null; }
+function curSubtab(){ const p=curProcess(); if(!p) return null; return p.subtabs.find(s=>s.id===data.activeSubtab)||p.subtabs[0]||null; }
+function touch(obj){ obj.updatedAt=nowISO(); }
+
+/* ============================================================
+   描画：工程タブ
+   ============================================================ */
+function renderTabs(){
+  const bar=$("tabbar");
+  const savedScroll=bar.scrollLeft;
+  bar.innerHTML="";
+  data.processes.forEach((p,i)=>{
+    const b=document.createElement("button");
+    b.className=`ptab type-${p.type}`+(p.id===data.activeProcess?" active":"");
+    b.innerHTML=`<span class="pnum">${i+1}</span>${escapeHtml(p.name)}`;
+    b.dataset.pid=p.id;
+    bar.appendChild(b);
+  });
+  if(editMode){
+    const add=document.createElement("button");
+    add.className="ptab-add"; add.textContent=getModuleConfig(currentModule)?.addLabel||"＋ 工程";
+    add.dataset.action="addProc";
+    bar.appendChild(add);
+  }
+}
+
+/* 描画：工程ヘッダー＋サブタブ */
+function renderProcessHead(){
+  const p=curProcess();
+  if(!p){ $("processHead").style.display="none"; return; }
+  $("processHead").style.display="block";
+  // タイトル行を再構築
+  const row=$("procTitleRow"); row.innerHTML="";
+  const procTitle=document.createElement("span");
+  procTitle.className="process-title";
+  procTitle.textContent=p.name;
+  if(editMode){
+    tapEdit(procTitle,
+      ()=>{ const inp=document.createElement("input"); inp.className="process-title-input"; inp.placeholder="工程名"; return inp; },
+      ()=>p.name,
+      v=>{ if(v.trim()) p.name=v.trim(); touch(p); },
+      ()=>{ saveData(); renderTabs(); }
+    );
+  }
+  row.appendChild(procTitle);
+  if(editMode){
+    const editBtn=document.createElement("button");
+    editBtn.className="icon-btn"; editBtn.title="工程タイプ・削除"; editBtn.textContent="✎";
+    editBtn.onclick=()=>openProcSheet(p);
+    row.appendChild(editBtn);
+  } else if(p.flow){
+    // 折り畳みシェブロン（閲覧モード・説明あり）
+    const ph=$("processHead");
+    if(procFlowCollapsed[p.id]===true) ph.classList.add('proc-flow-collapsed');
+    else ph.classList.remove('proc-flow-collapsed');
+    const chev=document.createElement('span'); chev.className='proc-flow-chevron'; chev.textContent='▼';
+    row.appendChild(chev);
+    // タイトル行全体をタップで開閉
+    row.style.cursor='pointer';
+    row.addEventListener('click',()=>{
+      procFlowCollapsed[p.id]=procFlowCollapsed[p.id]===true?false:true;
+      ph.classList.toggle('proc-flow-collapsed',procFlowCollapsed[p.id]===true);
+    });
+  }
+  // 大まかな流れ
+  const fr=$("procFlowRow"); fr.innerHTML="";
+  const flowDiv=document.createElement("div");
+  flowDiv.className="proc-flow-view"+(p.flow?"":" tap-placeholder");
+  flowDiv.textContent=p.flow||(editMode?"大まかな流れをタップして入力":"");
+  if(editMode){
+    tapEdit(flowDiv,
+      ()=>{ const ta=document.createElement("textarea"); ta.className="proc-flow-input"; ta.rows=1; ta.placeholder="例：依頼 → 現調 → 見積提出"; return ta; },
+      ()=>p.flow||"",
+      v=>{ p.flow=v; touch(p); },
+      ()=>{ saveData(); updateLayout(); }
+    );
+  }
+  fr.appendChild(flowDiv);
+  const sb=$("subtabbar"); sb.innerHTML="";
+  const modCfg=getModuleConfig(currentModule);
+  if(modCfg && modCfg.hasSubtabs===false){ sb.style.display="none"; return; }
+  sb.style.display="";
+  p.subtabs.forEach((s,si)=>{
+    const b=document.createElement("button");
+    b.className="stab"+(s.id===data.activeSubtab?" active":"");
+    b.dataset.sid=s.id;
+    if(editMode){
+      const inp=document.createElement("input");
+      inp.className="stab-name-input"; inp.value=s.name;
+      inp.size=Math.max(s.name.length,4);
+      inp.onclick=e=>{ e.stopPropagation(); data.activeSubtab=s.id; saveData(); renderContent(); renderProcessHead(); };
+      inp.onchange=()=>{ s.name=inp.value; inp.size=Math.max(inp.value.length,4); touch(s); touch(p); saveData(); };
+      b.appendChild(inp);
+      const del=document.createElement("span");
+      del.textContent="✕"; del.style.cssText="font-size:10px;margin-left:4px;opacity:.5;cursor:pointer;";
+      del.onclick=e=>{ e.stopPropagation(); openSubSheet(s); };
+      b.appendChild(del);
+    } else {
+      b.textContent=s.name;
+      b.onclick=()=>{ data.activeSubtab=s.id; saveData(); renderContent(); renderProcessHead(); };
+    }
+    sb.appendChild(b);
+  });
+  if(editMode){
+    const add=document.createElement("button");
+    add.className="stab-add"; add.textContent="＋タブ";
+    add.onclick=()=>openSubSheet(null);
+    sb.appendChild(add);
+  }
+}
+
+/* 描画：コンテンツ（手順ステップ＋業者メモ） */
+function renderContent(){
+  const c=$("content"); c.innerHTML="";
+  const p=curProcess(), s=curSubtab();
+  if(!p){ c.innerHTML=`<div class="empty">工程がありません。<br>「＋ 工程」から追加してください。</div>`; return; }
+  if(!s){ c.innerHTML=`<div class="empty">サブタブがありません。<br>「＋タブ」から追加してください。</div>`; }
+  else {
+    if(editMode){
+      const meta=document.createElement("div");
+      meta.style.cssText="font-size:11px;color:var(--muted);margin:2px 2px 12px;display:flex;align-items:center;gap:8px;";
+      meta.innerHTML=`<button class="mini-btn" id="renameSubBtn" style="margin-left:auto;">タブ名・削除</button>`;
+      c.appendChild(meta);
+      $("renameSubBtn") && ($("renameSubBtn").onclick=()=>openSubSheet(s));
+    }
+
+    // チェックリセットボタン
+    if(!editMode && s.steps.length){
+      if(!checkState[s.id]) checkState[s.id]={};
+      const resetBar=document.createElement('div'); resetBar.className='check-reset-bar';
+      const resetBtn=document.createElement('button'); resetBtn.className='check-reset-btn';
+      resetBtn.textContent='☑ チェックをリセット';
+      resetBtn.onclick=()=>{ checkState[s.id]={}; renderContent(); };
+      resetBar.appendChild(resetBtn);
+      c.appendChild(resetBar);
+    }
+
+    if(!s.steps.length){
+      const e=document.createElement("div");
+      e.className="empty"; e.innerHTML="まだ手順がありません。<br>下の「＋ 手順を追加」から作成してください。";
+      c.appendChild(e);
+    }
+    s.steps.forEach((st,i)=>c.appendChild(renderStep(st,i,s)));
+
+    if(editMode){
+      const addBtn=document.createElement("button");
+      addBtn.className="add-step-btn"; addBtn.textContent="＋ 手順を追加";
+      addBtn.onclick=()=>addStep(s);
+      c.appendChild(addBtn);
+    }
+  }
+  // 業者メモ（工程単位）
+  const mod2=getModuleConfig(currentModule);
+  if(!mod2||mod2.hasVendor) c.appendChild(renderVendor(p));
+}
+
+/* ============================================================
+   長押しドラッグ並び替え
+   ============================================================ */
+let dragState=null;
+
+function addLongPress(el, cb, delay=420){
+  let timer=null, moved=false;
+  el.addEventListener('touchstart', ev=>ev.preventDefault(), {passive:false});
+  el.addEventListener('contextmenu', ev=>ev.preventDefault());
+  el.addEventListener('pointerdown', ev=>{
+    moved=false;
+    timer=setTimeout(()=>{ timer=null; if(!moved) cb(ev); }, delay);
+  });
+  el.addEventListener('pointermove', ev=>{
+    if(Math.abs(ev.movementX||0)+Math.abs(ev.movementY||0)>4){ moved=true; if(timer){clearTimeout(timer);timer=null;} }
+  });
+  const cancel=()=>{ if(timer){clearTimeout(timer);timer=null;} };
+  el.addEventListener('pointerup',cancel); el.addEventListener('pointercancel',cancel);
+}
+
+function initDrag(ev, type, arr, idx, parentEl, itemEl, touchSt, touchSub){
+  ev.preventDefault();
+  const rect=itemEl.getBoundingClientRect();
+  const ghost=itemEl.cloneNode(true);
+  ghost.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:.85;pointer-events:none;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.25);border-radius:8px;`;
+  document.body.appendChild(ghost);
+  const ph=document.createElement('div'); ph.className='drag-placeholder'; ph.style.height=rect.height+'px';
+  itemEl.before(ph); itemEl.style.display='none';
+  dragState={type,arr,idx,ghost,placeholder:ph,hiddenEl:itemEl,startY:ev.clientY,ghostTop:rect.top,parentEl,touchSt,touchSub};
+  document.body.classList.add('dragging');
+  document.addEventListener('pointermove',onDragMove,{passive:false});
+  document.addEventListener('pointerup',onDragEnd);
+  document.addEventListener('pointercancel',onDragEnd);
+}
+
+function onDragMove(ev){
+  if(!dragState) return; ev.preventDefault();
+  const {ghost,ghostTop,startY,parentEl,placeholder,type,hiddenEl}=dragState;
+  ghost.style.top=(ghostTop+(ev.clientY-startY))+'px';
+  const cls=type==='step'?'step':'substep';
+  const items=[...parentEl.children].filter(el=>el.classList.contains(cls)&&el!==placeholder&&el!==hiddenEl&&el.style.display!=='none');
+  let insertBefore=null;
+  for(const el of items){ const r=el.getBoundingClientRect(); if(ev.clientY<r.top+r.height/2){insertBefore=el;break;} }
+  const addBtn=parentEl.querySelector('.add-substep-btn,.add-step-btn');
+  if(insertBefore) parentEl.insertBefore(placeholder,insertBefore);
+  else if(addBtn) parentEl.insertBefore(placeholder,addBtn);
+  else parentEl.appendChild(placeholder);
+}
+
+function onDragEnd(){
+  if(!dragState) return;
+  document.removeEventListener('pointermove',onDragMove);
+  document.removeEventListener('pointerup',onDragEnd);
+  document.removeEventListener('pointercancel',onDragEnd);
+  const {arr,idx,ghost,placeholder,hiddenEl,parentEl,type,touchSt,touchSub}=dragState;
+  dragState=null; ghost.remove(); document.body.classList.remove('dragging');
+  const cls=type==='step'?'step':'substep';
+  let toIdx=0;
+  for(const child of parentEl.children){
+    if(child===placeholder) break;
+    if(child.classList.contains(cls)&&child!==hiddenEl) toIdx++;
+  }
+  hiddenEl.remove(); placeholder.remove();
+  if(toIdx!==idx){ const [m]=arr.splice(idx,1); arr.splice(toIdx,0,m); }
+  if(touchSt) touch(touchSt); if(touchSub) touch(touchSub); saveData(); renderContent();
+}
+
+function renderStep(st,i,sub){
+  const wrap=document.createElement("div");
+  wrap.className="step";
+  wrap.id='step-'+st.id;
+
+  // 上部：番号＋タイトル
+  const top=document.createElement("div");
+  top.className="step-top";
+  const numEl=document.createElement("span"); numEl.className="step-num"; numEl.textContent=i+1;
+  if(editMode){ numEl.classList.add("drag-handle"); addLongPress(numEl,ev=>initDrag(ev,'step',sub.steps,i,$("content"),wrap,null,sub)); }
+  top.appendChild(numEl);
+  if(editMode){
+    const title=document.createElement("input");
+    title.className="step-title-in"; title.value=st.title||""; title.placeholder="手順タイトル（例：フォルダー移動）";
+    title.onchange=()=>{ st.title=title.value; touch(st); touch(sub); saveData(); renderProcessHead(); };
+    top.appendChild(title);
+  } else {
+    const title=document.createElement("span");
+    title.className="step-title-view"+(st.title?"":" tap-placeholder");
+    title.textContent=st.title||"タイトル未設定";
+    top.appendChild(title);
+    // 折り畳みシェブロン（内容がある場合のみ）
+    const hasContent=!!(st.text||(st.photoId&&photoCache[st.photoId])||(st.subSteps&&st.subSteps.length));
+    if(hasContent){
+      const chevron=document.createElement('span'); chevron.className='step-chevron'; chevron.textContent='▼';
+      top.appendChild(chevron);
+    }
+    // チェックボタン（閲覧モードのみ）
+    const cs=checkState[sub.id]||(checkState[sub.id]={});
+    const chk=document.createElement('button'); chk.className='chk-btn'+(cs[st.id]?' checked':'');
+    chk.textContent=cs[st.id]?'✓':'';
+    chk.onclick=e=>{ e.stopPropagation(); cs[st.id]=!cs[st.id]; chk.className='chk-btn'+(cs[st.id]?' checked':''); chk.textContent=cs[st.id]?'✓':''; wrap.className='step'+(cs[st.id]?' checked':'')+(collapseState[st.id]?' step-collapsed':''); };
+    top.appendChild(chk);
+    if(cs[st.id]) wrap.className='step checked';
+    // 折り畳みトグル（内容がある場合のみ）・デフォルト折り畳み
+    if(hasContent){
+      if(collapseState[st.id]===true) wrap.classList.add('step-collapsed');
+      top.style.cursor='pointer';
+      top.addEventListener('click',()=>{
+        collapseState[st.id]=collapseState[st.id]===true?false:true;
+        wrap.classList.toggle('step-collapsed',collapseState[st.id]===true);
+      });
+    }
+  }
+  wrap.appendChild(top);
+
+  if(editMode){
+    // 編集モード：写真フル幅＋テキストエリア
+    if(st.photoId && photoCache[st.photoId]){
+      const pw=document.createElement("div"); pw.className="step-photo-wrap";
+      const img=document.createElement("img"); img.className="step-photo"; img.src=photoCache[st.photoId];
+      pw.appendChild(img);
+      const layer=document.createElement("div"); layer.className="anno-layer";
+      img.onload=()=>renderAnnotations(layer,st.annotations,img);
+      if(img.complete) renderAnnotations(layer,st.annotations,img);
+      pw.appendChild(layer);
+      pw.onclick=()=>openAnnoEditor(st,sub);
+      wrap.appendChild(pw);
+    } else {
+      const e=document.createElement("div"); e.className="step-photo-empty";
+      e.textContent="📷 写真を追加（タップ）";
+      e.onclick=()=>pickPhoto(st,sub);
+      wrap.appendChild(e);
+    }
+    const body=document.createElement("div"); body.className="step-body";
+    const ta=document.createElement("textarea");
+    ta.className="step-text"; ta.value=st.text||""; ta.placeholder="説明文を入力…";
+    ta.rows=1; autoGrow(ta); ta.oninput=()=>autoGrow(ta);
+    ta.onchange=()=>{ st.text=ta.value; touch(st); touch(sub); saveData(); renderContentDateOnly(); };
+    body.appendChild(ta);
+    wrap.appendChild(body);
+  } else {
+    // 閲覧モード：写真サムネイル＋テキスト横並び
+    const makeTapText=()=>{
+      const displayDiv=document.createElement('div');
+      displayDiv.className='step-text-view';
+      const h=textToDisplay(st.text||'');
+      if(h) displayDiv.innerHTML=h;
+      return displayDiv;
+    };
+    if(st.photoId && photoCache[st.photoId]){
+      const row=document.createElement("div"); row.className="step-media-row";
+      const thumbCol=document.createElement("div"); thumbCol.className="step-thumb-col";
+      const thumbWrap=document.createElement("div"); thumbWrap.style.cssText="position:relative;display:inline-block;";
+      const thumb=document.createElement("img"); thumb.className="step-thumb";
+      thumb.src=photoCache[st.photoId];
+      thumb.onclick=()=>openLightbox(photoCache[st.photoId],st.annotations);
+      thumbWrap.appendChild(thumb);
+      if((st.annotations||[]).length){
+        const layer=document.createElement("div"); layer.className="anno-layer";
+        const doR=()=>renderAnnotations(layer,st.annotations,thumb);
+        thumb.onload=doR; if(thumb.complete&&thumb.naturalWidth) doR();
+        thumbWrap.appendChild(layer);
+      }
+      thumbCol.appendChild(thumbWrap);
+      row.appendChild(thumbCol);
+      const textCol=document.createElement("div"); textCol.className="step-text-col";
+      textCol.appendChild(makeTapText());
+      row.appendChild(textCol);
+      wrap.appendChild(row);
+    } else if(st.text){
+      const body=document.createElement("div"); body.className="step-body";
+      body.appendChild(makeTapText());
+      wrap.appendChild(body);
+    }
+  }
+
+  // サブ手順エリア
+  if(!st.subSteps) st.subSteps=[];
+  if(editMode || st.subSteps.length){
+    const ssArea=document.createElement('div'); ssArea.className='substep-area';
+    st.subSteps.forEach((ss,j)=>ssArea.appendChild(renderSubStep(ss,j,i,st,sub,ssArea)));
+    if(editMode){
+      const addSsBtn=document.createElement('button'); addSsBtn.className='add-substep-btn';
+      addSsBtn.innerHTML='↳ サブ手順を追加';
+      addSsBtn.onclick=()=>addSubStep(st,sub);
+      ssArea.appendChild(addSsBtn);
+    }
+    wrap.appendChild(ssArea);
+    // 初期表示時：全サブ手順チェック済みなら親に色付け
+    if(!editMode && st.subSteps.length>0){
+      const cs=checkState[sub.id]||{};
+      if(st.subSteps.every(x=>cs[x.id])) wrap.classList.add('substeps-complete');
+    }
+  }
+
+  // フッター
+  const foot=document.createElement("div"); foot.className="step-foot";
+  foot.innerHTML=`<span class="step-date"></span>`;
+  if(editMode){
+    const photoBtn=document.createElement("button");
+    photoBtn.className="mini-btn photo";
+    photoBtn.innerHTML=st.photoId?"🖊 写真編集":"📷 写真";
+    photoBtn.onclick=()=>st.photoId?openAnnoEditor(st,sub):pickPhoto(st,sub);
+    foot.appendChild(photoBtn);
+    if(st.photoId){
+      const rep=document.createElement("button");
+      rep.className="mini-btn"; rep.textContent="差替";
+      rep.onclick=()=>pickPhoto(st,sub);
+      foot.appendChild(rep);
+    }
+  }
+  if(editMode){
+    const up=document.createElement("button");
+    up.className="mini-btn"; up.textContent="↑";
+    up.onclick=()=>moveStep(sub,i,-1);
+    const down=document.createElement("button");
+    down.className="mini-btn"; down.textContent="↓";
+    down.onclick=()=>moveStep(sub,i,1);
+    foot.appendChild(up); foot.appendChild(down);
+    const del=document.createElement("button");
+    del.className="mini-btn del"; del.textContent="削除";
+    del.onclick=()=>delStep(sub,st);
+    foot.appendChild(del);
+  }
+  wrap.appendChild(foot);
+  return wrap;
+}
+
+function renderSubStep(ss,j,stepIdx,st,sub,ssArea){
+  const wrap=document.createElement('div'); wrap.className='substep';
+  const top=document.createElement('div'); top.className='substep-top';
+  const numBadge=document.createElement('span'); numBadge.className='substep-num';
+  numBadge.textContent=`${stepIdx+1}-${j+1}`;
+  if(editMode&&ssArea){ numBadge.classList.add('drag-handle'); addLongPress(numBadge,ev=>initDrag(ev,'substep',st.subSteps,j,ssArea,wrap,st,sub)); }
+  top.appendChild(numBadge);
+  if(editMode){
+    const titleIn=document.createElement('input');
+    titleIn.className='substep-title-in'; titleIn.value=ss.title||''; titleIn.placeholder='サブ手順タイトル';
+    titleIn.onchange=()=>{ ss.title=titleIn.value; touch(st); touch(sub); saveData(); };
+    top.appendChild(titleIn);
+  } else {
+    const titleEl=document.createElement('span');
+    titleEl.className='substep-title-view';
+    titleEl.textContent=ss.title||'';
+    top.appendChild(titleEl);
+    const cs=checkState[sub.id]||(checkState[sub.id]={});
+    const chk=document.createElement('button'); chk.className='chk-btn'+(cs[ss.id]?' checked':'');
+    chk.textContent=cs[ss.id]?'✓':'';
+    chk.onclick=()=>{
+      cs[ss.id]=!cs[ss.id];
+      chk.className='chk-btn'+(cs[ss.id]?' checked':'');
+      chk.textContent=cs[ss.id]?'✓':'';
+      wrap.className='substep'+(cs[ss.id]?' checked':'');
+      // 親ステップの全完了チェック
+      const allDone=st.subSteps.length>0&&st.subSteps.every(x=>cs[x.id]);
+      const stepEl=document.getElementById('step-'+st.id);
+      if(stepEl) stepEl.classList.toggle('substeps-complete',allDone);
+    };
+    top.appendChild(chk);
+    if(cs[ss.id]) wrap.className='substep checked';
+  }
+  wrap.appendChild(top);
+  if(editMode){
+    // 編集モード：写真＋テキストエリア
+    if(ss.photoId && photoCache[ss.photoId]){
+      const pw=document.createElement('div'); pw.className='step-photo-wrap';
+      const img=document.createElement('img'); img.className='step-photo'; img.src=photoCache[ss.photoId];
+      pw.appendChild(img);
+      const layer=document.createElement('div'); layer.className='anno-layer';
+      img.onload=()=>renderAnnotations(layer,ss.annotations,img);
+      if(img.complete) renderAnnotations(layer,ss.annotations,img);
+      pw.appendChild(layer);
+      pw.onclick=()=>openAnnoEditor(ss,sub);
+      wrap.appendChild(pw);
+    }
+    const body=document.createElement('div'); body.className='substep-body';
+    const ta=document.createElement('textarea');
+    ta.className='step-text'; ta.value=ss.text||''; ta.placeholder='説明文を入力…';
+    ta.rows=1; autoGrow(ta); ta.oninput=()=>autoGrow(ta);
+    ta.onchange=()=>{ ss.text=ta.value; touch(st); touch(sub); saveData(); };
+    body.appendChild(ta);
+    wrap.appendChild(body);
+  } else {
+    const makeTapText=()=>{
+      const displayDiv=document.createElement('div');
+      displayDiv.className='step-text-view';
+      const h=textToDisplay(ss.text||'');
+      if(h) displayDiv.innerHTML=h;
+      return displayDiv;
+    };
+    if(ss.photoId && photoCache[ss.photoId]){
+      const row=document.createElement('div'); row.className='step-media-row';
+      const thumbCol=document.createElement('div'); thumbCol.className='step-thumb-col';
+      const thumbWrap=document.createElement('div'); thumbWrap.style.cssText='position:relative;display:inline-block;';
+      const thumb=document.createElement('img'); thumb.className='step-thumb';
+      thumb.src=photoCache[ss.photoId];
+      thumb.onclick=()=>openLightbox(photoCache[ss.photoId],ss.annotations);
+      thumbWrap.appendChild(thumb);
+      if((ss.annotations||[]).length){
+        const layer=document.createElement('div'); layer.className='anno-layer';
+        const doR=()=>renderAnnotations(layer,ss.annotations,thumb);
+        thumb.onload=doR; if(thumb.complete&&thumb.naturalWidth) doR();
+        thumbWrap.appendChild(layer);
+      }
+      thumbCol.appendChild(thumbWrap);
+      row.appendChild(thumbCol);
+      const textCol=document.createElement('div'); textCol.className='step-text-col';
+      textCol.appendChild(makeTapText());
+      row.appendChild(textCol);
+      wrap.appendChild(row);
+    } else if(ss.text){
+      const body=document.createElement('div'); body.className='substep-body';
+      body.appendChild(makeTapText());
+      wrap.appendChild(body);
+    }
+  }
+  const foot=document.createElement('div'); foot.className='substep-foot';
+  if(editMode){
+    const photoBtn=document.createElement('button');
+    photoBtn.className='mini-btn photo';
+    photoBtn.innerHTML=ss.photoId?'🖊 写真編集':'📷 写真';
+    photoBtn.onclick=()=>ss.photoId?openAnnoEditor(ss,sub):pickPhoto(ss,sub);
+    foot.appendChild(photoBtn);
+    if(ss.photoId){
+      const rep=document.createElement('button'); rep.className='mini-btn'; rep.textContent='差替';
+      rep.onclick=()=>pickPhoto(ss,sub); foot.appendChild(rep);
+    }
+  }
+  if(editMode){
+    const del=document.createElement('button'); del.className='mini-btn del'; del.textContent='削除';
+    del.onclick=()=>delSubStep(st,ss,sub); foot.appendChild(del);
+  }
+  wrap.appendChild(foot);
+  return wrap;
+}
+
+function renderAnnotations(layer,annos,img){
+  layer.innerHTML="";
+  (annos||[]).forEach(a=>{
+    const el=document.createElement("div");
+    el.className="anno-mark "+a.type;
+    placeMark(el,a,img.clientWidth,img.clientHeight,false);
+    layer.appendChild(el);
+  });
+}
+
+// 軽量：日付だけ更新したいとき全描画を避ける
+function renderContentDateOnly(){ /* no-op：onchangeで十分 */ }
+
+function autoGrow(ta){ ta.style.height="auto"; ta.style.height=(ta.scrollHeight)+"px"; }
+
+/* ===== リッチテキスト ===== */
+// 旧 [r]/[b] タグ形式 or プレーンテキスト → HTML (表示・編集共通)
+function textToDisplay(text){
+  if(!text) return '';
+  if(/<\/?[a-z]/i.test(text)) return text; // すでにHTML
+  return text.split('\n').map(line=>{
+    const s=line
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\[r\]([\s\S]*?)\[\/r\]/g,'<span style="color:#e03131">$1</span>')
+      .replace(/\[b\]([\s\S]*?)\[\/b\]/g,'<span style="color:#1971c2">$1</span>');
+    return '<div>'+(s||'<br>')+'</div>';
+  }).join('');
+}
+// contenteditable の出力HTMLを整理
+function sanitizeRichHtml(html){
+  if(!html||html==='<br>') return '';
+  const d=document.createElement('div'); d.innerHTML=html;
+  // font[color] → span[style] (Safari互換)
+  d.querySelectorAll('font[color]').forEach(f=>{
+    const sp=document.createElement('span');
+    sp.style.color=f.getAttribute('color');
+    sp.innerHTML=f.innerHTML; f.replaceWith(sp);
+  });
+  return d.innerHTML;
+}
+// contenteditable用ツールバー
+function makeFmtBar(editor){
+  const bar=document.createElement('div'); bar.className='fmt-bar';
+  bar._touching=false;
+  let savedRange=null;
+  // フォーカスが外れる前に選択範囲を保存 (iOS対策)
+  editor.addEventListener('blur',()=>{
+    const sel=window.getSelection();
+    if(sel&&sel.rangeCount) savedRange=sel.getRangeAt(0).cloneRange();
+  });
+  const restoreSel=()=>{
+    editor.focus();
+    if(!savedRange) return;
+    const sel=window.getSelection();
+    try{ sel.removeAllRanges(); sel.addRange(savedRange); }catch(e){}
+  };
+  const mk=(html,cls,action)=>{
+    const b=document.createElement('button');
+    b.type='button'; b.className='fmt-btn'+(cls?' '+cls:''); b.innerHTML=html;
+    b.addEventListener('mousedown',e=>e.preventDefault());
+    b.addEventListener('touchstart',()=>{ bar._touching=true; },{passive:true});
+    b.addEventListener('touchend',()=>{
+      restoreSel(); action();
+      setTimeout(()=>{ bar._touching=false; },250);
+    },{passive:true});
+    b.addEventListener('click',()=>{ restoreSel(); action(); });
+    bar.appendChild(b);
+  };
+  mk('・ 箇条書き','',()=>{ document.execCommand('insertText',false,'・'); });
+  mk('<b>B</b> 太字','',()=>{ document.execCommand('bold',false,null); });
+  mk('<span style="color:#e03131;font-weight:800">A</span> 赤','red',()=>{ document.execCommand('foreColor',false,'#e03131'); });
+  mk('<span style="color:#1971c2;font-weight:800">A</span> 青','blue',()=>{ document.execCommand('foreColor',false,'#1971c2'); });
+  mk('A 黒','black',()=>{ document.execCommand('foreColor',false,'#1a1a1a'); });
+  return bar;
+}
+
+/* タップで直接編集できるヘルパー (opts?: {toolbar, render}) */
+function tapEdit(displayEl, makeEditor, getValue, setValue, onSave, opts){
+  displayEl.classList.add("tap-edit");
+  displayEl.onclick=()=>{
+    const ed=makeEditor();
+    ed.value=getValue();
+    let container=ed, bar=null;
+    if(opts&&opts.toolbar){
+      bar=opts.toolbar(ed);
+      container=document.createElement("div");
+      container.appendChild(bar);
+      container.appendChild(ed);
+    }
+    displayEl.replaceWith(container);
+    if(ed.tagName==="TEXTAREA"){ autoGrow(ed); ed.oninput=()=>autoGrow(ed); }
+    ed.focus();
+    const restore=()=>{
+      setValue(ed.value);
+      if(opts&&opts.render){ opts.render(displayEl,ed.value); }
+      else {
+        const txt=ed.value.trim();
+        displayEl.textContent=txt||"";
+        displayEl.className=displayEl.className.replace(" tap-placeholder","")+(txt?"":" tap-placeholder");
+      }
+      container.replaceWith(displayEl);
+      onSave();
+    };
+    ed.onblur=()=>setTimeout(()=>{
+      if(bar&&(bar._touching||bar.contains(document.activeElement))) return;
+      if(document.activeElement===ed) return;
+      restore();
+    },160);
+  };
+  return displayEl;
+}
+
+/* 業者メモ */
+function renderVendor(p){
+  const card=document.createElement("div"); card.className="vendor-card"+((p.vendorNotes||[]).length===0?" vendor-card-empty":"");
+  const head=document.createElement("div"); head.className="vendor-head";
+  head.innerHTML=`<span class="ic">📌</span>業者別メモ・注意点`;
+  card.appendChild(head);
+  const list=document.createElement("div"); list.className="vendor-list";
+  (p.vendorNotes||[]).forEach(v=>{
+    const it=document.createElement("div"); it.className="vendor-item";
+    const nm=document.createElement("div"); nm.className="vendor-name";
+    nm.innerHTML=`🏢 ${escapeHtml(v.vendor)}`;
+    if(editMode){
+      const del=document.createElement("button"); del.className="del"; del.textContent="削除";
+      del.onclick=()=>{ p.vendorNotes=p.vendorNotes.filter(x=>x.id!==v.id); touch(p); saveData(); renderContent(); };
+      nm.appendChild(del);
+    }
+    const tx=document.createElement("div"); tx.className="vendor-note-txt"; tx.textContent=v.note;
+    it.appendChild(nm); it.appendChild(tx);
+    if(editMode) it.onclick=e=>{ if(!e.target.classList.contains("del")) openVendorSheet(p,v); };
+    list.appendChild(it);
+  });
+  card.appendChild(list);
+  const add=document.createElement("button"); add.className="vendor-add"; add.textContent="＋ 業者メモを追加";
+  add.onclick=()=>openVendorSheet(p,null);
+  card.appendChild(add);
+  return card;
+}
+
+function updateLayout(){
+  const hh=document.querySelector("header").offsetHeight;
+  const th=$("tabbar").offsetHeight;
+  const ph=($("processHead").style.display==="none")?0:$("processHead").offsetHeight;
+  $("tabbar").style.top=hh+"px";
+  $("processHead").style.top=(hh+th)+"px";
+  $("content").style.top=(hh+th+ph)+"px";
+}
+function renderAll(){ renderTabs(); renderProcessHead(); renderContent(); updateHeadSub(); updateLayout(); }
+function updateHeadSub(){
+  const n=data.processes.length;
+  const mod=getModuleConfig(currentModule);
+  const el=$("docInfoLabel"); if(el) el.textContent=`${mod?mod.tabLabel:"工程"} ${n}件 ・ 最終更新 ${fmtDate(data.updatedAt)}`;
+}
+
+/* ============================================================
+   手順CRUD
+   ============================================================ */
+function addStep(sub){
+  sub.steps.push({id:uid(),title:"",text:"",photoId:null,annotations:[],subSteps:[],updatedAt:nowISO()});
+  touch(sub); saveData(); renderContent();
+  // 末尾へスクロール
+  setTimeout(()=>{ const c=$("content"); c.scrollTo({top:c.scrollHeight,behavior:"smooth"}); },50);
+}
+function delStep(sub,st){
+  if(!confirm("この手順を削除しますか？")) return;
+  if(st.photoId){ idbDel("photos",st.photoId); delete photoCache[st.photoId]; }
+  sub.steps=sub.steps.filter(x=>x.id!==st.id);
+  touch(sub); saveData(); renderContent();
+}
+function moveStep(sub,i,dir){
+  const j=i+dir; if(j<0||j>=sub.steps.length) return;
+  const t=sub.steps[i]; sub.steps[i]=sub.steps[j]; sub.steps[j]=t;
+  touch(sub); saveData(); renderContent();
+}
+function addSubStep(st,sub){
+  if(!st.subSteps) st.subSteps=[];
+  st.subSteps.push({id:uid(),title:'',text:'',photoId:null,annotations:[],updatedAt:nowISO()});
+  touch(st); touch(sub); saveData(); renderContent();
+}
+function delSubStep(st,ss,sub){
+  if(!confirm('このサブ手順を削除しますか？')) return;
+  if(ss.photoId){ idbDel('photos',ss.photoId); delete photoCache[ss.photoId]; }
+  st.subSteps=st.subSteps.filter(x=>x.id!==ss.id);
+  touch(st); touch(sub); saveData(); renderContent();
+}
+
+/* ============================================================
+   写真：選択 → 圧縮 → 保存
+   ============================================================ */
+let pendingPhotoTarget=null;
+function pickPhoto(st,sub){
+  pendingPhotoTarget={st,sub};
+  showSheet("photoSourceSheet");
+}
+$("psCameraBtn").onclick=()=>{ hideSheets(); $("cameraInput").value=""; $("cameraInput").click(); };
+$("psGalleryBtn").onclick=()=>{ hideSheets(); $("photoInput").value=""; $("photoInput").click(); };
+
+async function saveOriginalToDevice(dataUrl){
+  try{
+    const res=await fetch(dataUrl);
+    const blob=await res.blob();
+    const fname=`tejunsho_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.jpg`;
+    const file=new File([blob],fname,{type:"image/jpeg"});
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:"手順書の写真"});
+    } else {
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a"); a.href=url; a.download=fname; a.click();
+      URL.revokeObjectURL(url);
+    }
+  }catch(e){ if(e.name!=="AbortError") console.warn("端末保存スキップ",e); }
+}
+
+async function handlePhotoFile(file, saveOriginal){
+  if(!file||!pendingPhotoTarget) return;
+  toast("画像を処理中…");
+  try{
+    const dataUrl=await compressImage(file,1400,0.72);
+    if(saveOriginal) saveOriginalToDevice(dataUrl); // トリミング前の原本を保存
+    openCropUI(dataUrl, async croppedUrl=>{
+      const {st,sub}=pendingPhotoTarget;
+      const pid=st.photoId||uid();
+      st.photoId=pid; st.annotations=st.annotations||[];
+      photoCache[pid]=croppedUrl;
+      await idbSet("photos",pid,croppedUrl);
+      touch(st); touch(sub); await saveData();
+      renderContent();
+      toast(saveOriginal?"写真を追加しました（原本を端末に保存）":"写真を追加しました");
+      pendingPhotoTarget=null;
+    });
+  }catch(err){ toast("画像の読み込みに失敗しました"); pendingPhotoTarget=null; }
+}
+
+$("cameraInput").addEventListener("change",e=>handlePhotoFile(e.target.files[0], true));
+$("photoInput").addEventListener("change",e=>handlePhotoFile(e.target.files[0], false));
+
+/* ===== トリミングUI ===== */
+let cropCtx={img:null,cx:0,cy:0,cw:0,ch:0,canvasX:0,canvasY:0,scale:1,drag:null,onConfirm:null};
+function openCropUI(dataUrl,onConfirm){
+  const img=new Image();
+  img.onload=()=>{
+    cropCtx.img=img; cropCtx.onConfirm=onConfirm;
+    const overlay=$("cropOverlay"); overlay.style.display="flex";
+    const cv=$("cropCanvas");
+    const wrap=cv.parentElement;
+    const wW=wrap.clientWidth, wH=wrap.clientHeight;
+    const sc=Math.min(wW/img.width, wH/img.height, 1);
+    const cw=Math.round(img.width*sc), ch=Math.round(img.height*sc);
+    cv.width=wW; cv.height=wH;
+    cropCtx.canvasX=(wW-cw)/2; cropCtx.canvasY=(wH-ch)/2;
+    cropCtx.canvasW=cw; cropCtx.canvasH=ch; cropCtx.scale=sc;
+    const mg=0.1;
+    cropCtx.cx=Math.round(img.width*mg); cropCtx.cy=Math.round(img.height*mg);
+    cropCtx.cw=Math.round(img.width*(1-2*mg)); cropCtx.ch=Math.round(img.height*(1-2*mg));
+    drawCropUI();
+  };
+  img.src=dataUrl;
+}
+function drawCropUI(){
+  const cv=$("cropCanvas"), ctx2=cv.getContext("2d");
+  const {img,canvasX,canvasY,canvasW,canvasH,cx,cy,cw,ch,scale}=cropCtx;
+  ctx2.clearRect(0,0,cv.width,cv.height);
+  ctx2.drawImage(img,canvasX,canvasY,canvasW,canvasH);
+  ctx2.fillStyle="rgba(0,0,0,0.6)";
+  ctx2.fillRect(0,0,cv.width,cv.height);
+  const rx=canvasX+cx*scale, ry=canvasY+cy*scale, rw=cw*scale, rh=ch*scale;
+  ctx2.clearRect(rx,ry,rw,rh);
+  ctx2.drawImage(img,cx,cy,cw,ch,rx,ry,rw,rh);
+  ctx2.strokeStyle="#fff"; ctx2.lineWidth=2; ctx2.strokeRect(rx,ry,rw,rh);
+  // サードラインガイド
+  ctx2.strokeStyle="rgba(255,255,255,0.35)"; ctx2.lineWidth=1; ctx2.beginPath();
+  [1/3,2/3].forEach(f=>{
+    ctx2.moveTo(rx+rw*f,ry); ctx2.lineTo(rx+rw*f,ry+rh);
+    ctx2.moveTo(rx,ry+rh*f); ctx2.lineTo(rx+rw,ry+rh*f);
+  }); ctx2.stroke();
+  // コーナーハンドル
+  ctx2.fillStyle="#fff";
+  const hs=18;
+  [[rx,ry],[rx+rw,ry],[rx,ry+rh],[rx+rw,ry+rh]].forEach(([hx,hy])=>{
+    ctx2.fillRect(hx-hs/2,hy-hs/2,hs,hs);
+  });
+}
+function cropPt(clientX,clientY){
+  const cv=$("cropCanvas"), r=cv.getBoundingClientRect();
+  return {x:(clientX-r.left-cropCtx.canvasX)/cropCtx.scale, y:(clientY-r.top-cropCtx.canvasY)/cropCtx.scale};
+}
+$("cropCanvas").addEventListener("touchstart",e=>{
+  e.preventDefault();
+  const t=e.touches[0], pt=cropPt(t.clientX,t.clientY);
+  const {cx,cy,cw,ch,scale}=cropCtx; const hs=28/scale;
+  let handle=null;
+  if(Math.abs(pt.x-cx)<hs&&Math.abs(pt.y-cy)<hs) handle="TL";
+  else if(Math.abs(pt.x-(cx+cw))<hs&&Math.abs(pt.y-cy)<hs) handle="TR";
+  else if(Math.abs(pt.x-cx)<hs&&Math.abs(pt.y-(cy+ch))<hs) handle="BL";
+  else if(Math.abs(pt.x-(cx+cw))<hs&&Math.abs(pt.y-(cy+ch))<hs) handle="BR";
+  if(handle) cropCtx.drag={type:"corner",handle,sx:pt.x,sy:pt.y,icx:cx,icy:cy,icw:cw,ich:ch};
+  else if(pt.x>cx&&pt.x<cx+cw&&pt.y>cy&&pt.y<cy+ch) cropCtx.drag={type:"move",sx:pt.x,sy:pt.y,icx:cx,icy:cy};
+},{passive:false});
+$("cropCanvas").addEventListener("touchmove",e=>{
+  e.preventDefault(); if(!cropCtx.drag) return;
+  const t=e.touches[0], pt=cropPt(t.clientX,t.clientY);
+  const d=cropCtx.drag, {img}=cropCtx; const min=50;
+  if(d.type==="move"){
+    cropCtx.cx=Math.max(0,Math.min(img.width-cropCtx.cw, d.icx+(pt.x-d.sx)));
+    cropCtx.cy=Math.max(0,Math.min(img.height-cropCtx.ch, d.icy+(pt.y-d.sy)));
+  } else {
+    const {handle,sx,sy,icx,icy,icw,ich}=d, dx=pt.x-sx, dy=pt.y-sy;
+    if(handle==="TL"){
+      cropCtx.cx=Math.max(0,icx+dx); cropCtx.cw=Math.max(min,icw-dx);
+      cropCtx.cy=Math.max(0,icy+dy); cropCtx.ch=Math.max(min,ich-dy);
+    } else if(handle==="TR"){
+      cropCtx.cw=Math.max(min,Math.min(img.width-icx,icw+dx));
+      cropCtx.cy=Math.max(0,icy+dy); cropCtx.ch=Math.max(min,ich-dy);
+    } else if(handle==="BL"){
+      cropCtx.cx=Math.max(0,icx+dx); cropCtx.cw=Math.max(min,icw-dx);
+      cropCtx.ch=Math.max(min,Math.min(img.height-icy,ich+dy));
+    } else {
+      cropCtx.cw=Math.max(min,Math.min(img.width-icx,icw+dx));
+      cropCtx.ch=Math.max(min,Math.min(img.height-icy,ich+dy));
+    }
+  }
+  drawCropUI();
+},{passive:false});
+$("cropCanvas").addEventListener("touchend",()=>{ cropCtx.drag=null; });
+$("cropConfirm").onclick=()=>{
+  const {img,cx,cy,cw,ch}=cropCtx;
+  const cv2=document.createElement("canvas"); cv2.width=cw; cv2.height=ch;
+  cv2.getContext("2d").drawImage(img,cx,cy,cw,ch,0,0,cw,ch);
+  const url=cv2.toDataURL("image/jpeg",0.82);
+  $("cropOverlay").style.display="none";
+  if(cropCtx.onConfirm) cropCtx.onConfirm(url);
+};
+$("cropCancel").onclick=()=>{
+  $("cropOverlay").style.display="none";
+  cropCtx.onConfirm=null; pendingPhotoTarget=null;
+};
+function compressImage(file,maxSize,quality){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let {width:w,height:h}=img;
+      if(w>maxSize||h>maxSize){ const r=Math.min(maxSize/w,maxSize/h); w=Math.round(w*r); h=Math.round(h*r); }
+      const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      res(cv.toDataURL("image/jpeg",quality));
+    };
+    img.onerror=rej; img.src=url;
+  });
+}
+
+/* ============================================================
+   注釈エディタ
+   ============================================================ */
+let annoState=null; // {st, sub, annos:[...], selected:index}
+function openAnnoEditor(st,sub){
+  if(!st.photoId||!photoCache[st.photoId]){ pickPhoto(st,sub); return; }
+  annoState={ st, sub, annos:JSON.parse(JSON.stringify(st.annotations||[])), selected:-1 };
+  $("annoImg").src=photoCache[st.photoId];
+  $("annoEditor").classList.remove("hidden");
+  $("annoImg").onload=drawAnnoMarks;
+  if($("annoImg").complete) drawAnnoMarks();
+}
+function closeAnnoEditor(){
+  $("annoEditor").classList.add("hidden");
+  annoState=null;
+}
+function drawAnnoMarks(){
+  const stage=$("annoStage");
+  stage.querySelectorAll(".anno-mark").forEach(n=>n.remove());
+  const img=$("annoImg");
+  annoState.annos.forEach((a,idx)=>{
+    const el=document.createElement("div");
+    el.className="anno-mark "+a.type+(idx===annoState.selected?" selected":"");
+    placeMark(el,a,img.clientWidth,img.clientHeight,true);
+    el.addEventListener("pointerdown",ev=>startDrag(ev,idx,el));
+    stage.appendChild(el);
+  });
+}
+// マークのスタイル・位置決め（編集/表示共通）
+function placeMark(el,a,iw,ih,interactive){
+  const base=Math.min(iw,ih);
+  el.style.left=a.x+"%"; el.style.top=a.y+"%";
+  const sizePx=Math.max(14,(a.size/100)*base);
+  if(a.type==="circle"){
+    el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
+    el.style.borderWidth=Math.max(2,base*0.006)+"px";
+  } else if(a.type==="num"){
+    el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
+    el.style.fontSize=(sizePx*0.55)+"px"; el.textContent=a.text||"";
+  } else if(a.type==="text"){
+    el.style.fontSize=sizePx+"px"; el.textContent=a.text||"";
+  } else if(a.type==="arrow"){
+    el.style.fontSize=(sizePx*1.4)+"px"; el.textContent="➜";
+  } else if(a.type==="rect"){
+    const wPx=Math.max(20,(a.size/100)*iw);
+    const hPx=Math.max(10,wPx*0.6*(a.hRatio||1));
+    el.style.width=wPx+"px"; el.style.height=hPx+"px";
+    el.style.borderWidth=Math.max(2,base*0.005)+"px";
+  }
+}
+// 追加
+function addAnno(type){
+  const base={x:50,y:50,size:14};
+  if(type==="circle") annoState.annos.push({...base,type:"circle",size:18});
+  else if(type==="num"){
+    const n=annoState.annos.filter(a=>a.type==="num").length+1;
+    const t=prompt("番号・記号を入力",String(n));
+    if(t==null) return;
+    annoState.annos.push({...base,type:"num",size:10,text:t});
+  } else if(type==="text"){
+    const t=prompt("表示する赤文字を入力","注意");
+    if(t==null) return;
+    annoState.annos.push({...base,type:"text",size:7,text:t});
+  } else if(type==="arrow"){
+    annoState.annos.push({...base,type:"arrow",size:9});
+  } else if(type==="rect"){
+    annoState.annos.push({...base,type:"rect",size:25,hRatio:1});
+  }
+  annoState.selected=annoState.annos.length-1;
+  drawAnnoMarks();
+}
+$("atCircle").onclick=()=>addAnno("circle");
+$("atNum").onclick=()=>addAnno("num");
+$("atText").onclick=()=>addAnno("text");
+$("atArrow").onclick=()=>addAnno("arrow");
+$("atRect").onclick=()=>addAnno("rect");
+$("atBigger").onclick=()=>resizeSel(1.25);
+$("atSmaller").onclick=()=>resizeSel(0.8);
+$("atTaller").onclick=()=>{
+  if(annoState.selected<0){ toast("赤四角を選択してください"); return; }
+  const a=annoState.annos[annoState.selected];
+  if(a.type!=="rect"){ toast("赤四角のみ対応"); return; }
+  a.hRatio=Math.min(8, (a.hRatio||1)*1.3); drawAnnoMarks();
+};
+$("atShorter").onclick=()=>{
+  if(annoState.selected<0){ toast("赤四角を選択してください"); return; }
+  const a=annoState.annos[annoState.selected];
+  if(a.type!=="rect"){ toast("赤四角のみ対応"); return; }
+  a.hRatio=Math.max(0.1, (a.hRatio||1)*0.77); drawAnnoMarks();
+};
+
+// アノテーションステージでピンチ→スタンプリサイズ（2本指で自動選択＆リサイズ）
+{
+  let _pt=null;
+  const stageEl=()=>$("annoStage");
+  function findNearestMark(mx,my){
+    const img=$("annoImg"); if(!img) return;
+    const r=img.getBoundingClientRect();
+    let best=-1,bestD=Infinity;
+    annoState.annos.forEach((a,idx)=>{
+      const ax=r.left+(a.x/100)*r.width, ay=r.top+(a.y/100)*r.height;
+      const d=Math.hypot(mx-ax,my-ay);
+      if(d<bestD){bestD=d;best=idx;}
+    });
+    if(best>=0&&bestD<140){annoState.selected=best;drawAnnoMarks();}
+  }
+  document.addEventListener("touchstart",e=>{
+    if(!stageEl()||!stageEl().contains(e.target)) return;
+    if(e.touches.length===2){
+      const t1=e.touches[0],t2=e.touches[1];
+      const mx=(t1.clientX+t2.clientX)/2, my=(t1.clientY+t2.clientY)/2;
+      if(annoState.selected<0) findNearestMark(mx,my);
+      if(annoState.selected>=0){
+        const a=annoState.annos[annoState.selected];
+        _pt={
+          initDist:Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY),
+          initDx:Math.max(10,Math.abs(t2.clientX-t1.clientX)),
+          initDy:Math.max(10,Math.abs(t2.clientY-t1.clientY)),
+          initSize:a.size, initHRatio:a.hRatio||1
+        };
+        e.preventDefault();
+      }
+    }
+  },{passive:false});
+  document.addEventListener("touchmove",e=>{
+    if(!_pt||!stageEl()||!stageEl().contains(e.target)) return;
+    if(e.touches.length===2&&annoState.selected>=0){
+      const t1=e.touches[0],t2=e.touches[1];
+      const a=annoState.annos[annoState.selected];
+      if(a.type==='rect'){
+        const dx=Math.max(1,Math.abs(t2.clientX-t1.clientX));
+        const dy=Math.max(1,Math.abs(t2.clientY-t1.clientY));
+        a.size=Math.max(3,Math.min(60,_pt.initSize*(dx/_pt.initDx)));
+        a.hRatio=Math.max(0.1,Math.min(10,_pt.initHRatio*(dy/_pt.initDy)));
+      } else {
+        const dist=Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY);
+        a.size=Math.max(3,Math.min(60,_pt.initSize*(dist/_pt.initDist)));
+      }
+      drawAnnoMarks(); e.preventDefault();
+    }
+  },{passive:false});
+  document.addEventListener("touchend",e=>{if(e.touches.length<2)_pt=null;});
+}
+$("atDelete").onclick=()=>{
+  if(annoState.selected<0){ toast("印をタップで選んでから削除"); return; }
+  annoState.annos.splice(annoState.selected,1); annoState.selected=-1; drawAnnoMarks();
+};
+function resizeSel(f){
+  if(annoState.selected<0){ toast("印をタップで選択してください"); return; }
+  const a=annoState.annos[annoState.selected];
+  a.size=Math.max(3,Math.min(60,a.size*f)); drawAnnoMarks();
+}
+// ドラッグ
+let dragInfo=null;
+function startDrag(ev,idx,el){
+  ev.preventDefault(); ev.stopPropagation();
+  annoState.selected=idx; drawAnnoMarks();
+  const stage=$("annoImg").getBoundingClientRect();
+  const elNow=$("annoStage").querySelectorAll(".anno-mark")[idx];
+  dragInfo={idx, rect:stage, moved:false};
+  elNow.setPointerCapture && elNow.setPointerCapture(ev.pointerId);
+  elNow.addEventListener("pointermove",onDrag);
+  elNow.addEventListener("pointerup",endDrag);
+  elNow.addEventListener("pointercancel",endDrag);
+  dragInfo._el=elNow;
+}
+function onDrag(ev){
+  if(!dragInfo) return;
+  const r=dragInfo.rect;
+  let x=((ev.clientX-r.left)/r.width)*100;
+  let y=((ev.clientY-r.top)/r.height)*100;
+  x=Math.max(0,Math.min(100,x)); y=Math.max(0,Math.min(100,y));
+  const a=annoState.annos[dragInfo.idx]; a.x=x; a.y=y; dragInfo.moved=true;
+  dragInfo._el.style.left=x+"%"; dragInfo._el.style.top=y+"%";
+}
+function endDrag(ev){
+  if(!dragInfo) return;
+  const el=dragInfo._el;
+  el.removeEventListener("pointermove",onDrag);
+  el.removeEventListener("pointerup",endDrag);
+  el.removeEventListener("pointercancel",endDrag);
+  dragInfo=null;
+}
+$("annoCancel").onclick=closeAnnoEditor;
+$("annoSave").onclick=async ()=>{
+  const {st,sub}=annoState;
+  st.annotations=annoState.annos; touch(st); touch(sub);
+  await saveData();
+  closeAnnoEditor(); renderContent();
+  toast("印を保存しました");
+};
+
+/* ============================================================
+   工程モーダル
+   ============================================================ */
+let procEditTarget=null, procPickType="normal";
+function openProcSheet(p){
+  procEditTarget=p;
+  const mod=getModuleConfig(currentModule);
+  const label=mod?.tabLabel||"工程";
+  $("procSheetTitle").textContent=p?`${label}を編集`:`${label}を追加`;
+  $("procNameInput").value=p?p.name:"";
+  $("procFlowInput").value=p?p.flow||"":"";
+  procPickType=p?p.type||"normal":"normal";
+  paintTypePick();
+  $("procDelBtn").style.display=p?"block":"none";
+  showSheet("procSheet");
+}
+function paintTypePick(){
+  $("procTypePick").querySelectorAll(".type-opt").forEach(b=>{
+    b.classList.toggle("sel", b.dataset.type===procPickType);
+  });
+}
+$("procTypePick").querySelectorAll(".type-opt").forEach(b=>{
+  b.onclick=()=>{ procPickType=b.dataset.type; paintTypePick(); };
+});
+$("procSaveBtn").onclick=async ()=>{
+  const name=$("procNameInput").value.trim();
+  if(!name){ toast(`${getModuleConfig(currentModule)?.saveErrLabel||"工程名"}を入力してください`); return; }
+  const flow=$("procFlowInput").value.trim();
+  if(procEditTarget){ procEditTarget.name=name; procEditTarget.type=procPickType; procEditTarget.flow=flow; touch(procEditTarget); }
+  else{
+    const np={id:uid(),name,type:procPickType,flow,updatedAt:nowISO(),vendorNotes:[],
+      subtabs:[{id:uid(),name:"手順",updatedAt:nowISO(),steps:[]}]};
+    data.processes.push(np); data.activeProcess=np.id; data.activeSubtab=np.subtabs[0].id;
+  }
+  await saveData(); hideSheets(); renderAll();
+};
+$("procDelBtn").onclick=async ()=>{
+  if(!procEditTarget) return;
+  const lbl=getModuleConfig(currentModule)?.tabLabel||"工程";
+  if(!confirm(`${lbl}「${procEditTarget.name}」を中の手順ごと削除しますか？`)) return;
+  // 写真も削除
+  procEditTarget.subtabs.forEach(s=>s.steps.forEach(st=>{ if(st.photoId){ idbDel("photos",st.photoId); delete photoCache[st.photoId]; } }));
+  data.processes=data.processes.filter(p=>p.id!==procEditTarget.id);
+  if(data.activeProcess===procEditTarget.id){
+    data.activeProcess=data.processes[0]?.id||null;
+    data.activeSubtab=data.processes[0]?.subtabs[0]?.id||null;
+  }
+  await saveData(); hideSheets(); renderAll();
+};
+
+/* ============================================================
+   サブタブモーダル
+   ============================================================ */
+let subEditTarget=null;
+function openSubSheet(s){
+  subEditTarget=s;
+  $("subSheetTitle").textContent=s?"サブタブを編集":"サブタブを追加";
+  $("subNameInput").value=s?s.name:"";
+  $("subDelBtn").style.display=s?"block":"none";
+  showSheet("subSheet");
+}
+$("subSaveBtn").onclick=async ()=>{
+  const name=$("subNameInput").value.trim();
+  if(!name){ toast("タブ名を入力してください"); return; }
+  const p=curProcess();
+  if(subEditTarget){ subEditTarget.name=name; touch(subEditTarget); }
+  else{
+    const ns={id:uid(),name,updatedAt:nowISO(),steps:[]};
+    p.subtabs.push(ns); data.activeSubtab=ns.id; touch(p);
+  }
+  await saveData(); hideSheets(); renderProcessHead(); renderContent();
+};
+$("subDelBtn").onclick=async ()=>{
+  if(!subEditTarget) return;
+  const p=curProcess();
+  if(p.subtabs.length<=1){ toast("最後の1つは削除できません"); return; }
+  if(!confirm(`サブタブ「${subEditTarget.name}」を削除しますか？`)) return;
+  subEditTarget.steps.forEach(st=>{ if(st.photoId){ idbDel("photos",st.photoId); delete photoCache[st.photoId]; } });
+  p.subtabs=p.subtabs.filter(s=>s.id!==subEditTarget.id);
+  if(data.activeSubtab===subEditTarget.id) data.activeSubtab=p.subtabs[0].id;
+  touch(p); await saveData(); hideSheets(); renderProcessHead(); renderContent();
+};
+
+/* ============================================================
+   業者メモモーダル
+   ============================================================ */
+let vendorEditTarget=null, vendorProc=null;
+function openVendorSheet(p,v){
+  vendorProc=p; vendorEditTarget=v;
+  $("vendorNameInput").value=v?v.vendor:"";
+  $("vendorNoteInput").value=v?v.note:"";
+  showSheet("vendorSheet");
+}
+$("vendorSaveBtn").onclick=async ()=>{
+  const name=$("vendorNameInput").value.trim();
+  const note=$("vendorNoteInput").value.trim();
+  if(!name){ toast("業者名を入力してください"); return; }
+  if(vendorEditTarget){ vendorEditTarget.vendor=name; vendorEditTarget.note=note; }
+  else{ vendorProc.vendorNotes=vendorProc.vendorNotes||[]; vendorProc.vendorNotes.push({id:uid(),vendor:name,note}); }
+  touch(vendorProc); await saveData(); hideSheets(); renderContent();
+};
+
+/* ============================================================
+   メニュー：エクスポート / インポート / 初期化
+   ============================================================ */
+// タブバー：イベント委譲（再描画で壊れない）
+$("tabbar").addEventListener("click",e=>{
+  const btn=e.target.closest("[data-pid]");
+  if(btn){
+    if(btn._wasDragged){ btn._wasDragged=false; return; } // ドラッグ後のクリック無視
+    const p=data&&data.processes.find(x=>x.id===btn.dataset.pid);
+    if(!p) return;
+    data.activeProcess=p.id;
+    data.activeSubtab=(p.subtabs[0]&&p.subtabs[0].id)||null;
+    saveData(); renderAll();
+    return;
+  }
+  if(e.target.closest("[data-action='addProc']")) openProcSheet(null);
+});
+
+/* ===== タブ長押し並び替え（挿入マーカー方式） ===== */
+(()=>{
+  const bar=$("tabbar");
+  let dragPid=null, origBtn=null, origIdx=-1, dropIdx=-1;
+  let indicator=null;
+  let lpt=null, touchSX=0, touchSY=0;
+
+  const getTabs=()=>Array.from(bar.querySelectorAll('[data-pid]'));
+  const cancelLP=()=>{ if(lpt){clearTimeout(lpt);lpt=null;} };
+
+  function enter(btn,cx,cy){
+    if(navigator.vibrate) navigator.vibrate(40);
+    dragPid=btn.dataset.pid;
+    origBtn=btn;
+    origIdx=data.processes.findIndex(p=>p.id===dragPid);
+    dropIdx=origIdx;
+
+    // 挿入マーカー（縦線）
+    indicator=document.createElement('div');
+    indicator.className='tab-insert-indicator';
+    bar.style.position='relative';
+    bar.appendChild(indicator);
+
+    btn.classList.add('dragging-src');
+
+    document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('touchend',onEnd,{once:true});
+    document.addEventListener('touchcancel',onEnd,{once:true});
+    updateIndicator(cx);
+  }
+
+  function updateIndicator(cx){
+    const tabs=getTabs().filter(t=>t!==origBtn);
+    const barRect=bar.getBoundingClientRect();
+    let insertBefore=-1; // -1 = 末尾
+    for(let i=0;i<tabs.length;i++){
+      const r=tabs[i].getBoundingClientRect();
+      if(cx < r.left+r.width/2){ insertBefore=i; break; }
+    }
+    // 挿入マーカーの位置
+    let lineLeft;
+    if(insertBefore===0){
+      lineLeft=tabs[0].getBoundingClientRect().left - barRect.left - 6;
+    } else if(insertBefore>0){
+      const prev=tabs[insertBefore-1].getBoundingClientRect();
+      lineLeft=prev.right - barRect.left + 3;
+    } else {
+      const last=tabs[tabs.length-1];
+      lineLeft=(last?last.getBoundingClientRect().right - barRect.left + 3:4);
+    }
+    indicator.style.left=Math.max(0,lineLeft)+'px';
+
+    // dropIdx を計算（元のインデックス空間に戻す）
+    const otherPids=tabs.map(t=>t.dataset.pid);
+    if(insertBefore<0){
+      const lastPid=otherPids[otherPids.length-1];
+      dropIdx=data.processes.findIndex(p=>p.id===lastPid)+1;
+      if(origIdx<=dropIdx-1) dropIdx--;
+    } else {
+      const beforePid=otherPids[insertBefore];
+      dropIdx=data.processes.findIndex(p=>p.id===beforePid);
+      if(origIdx<dropIdx) dropIdx--;
+    }
+    dropIdx=Math.max(0,Math.min(data.processes.length-1,dropIdx));
+  }
+
+  function onMove(e){
+    if(!dragPid) return;
+    e.preventDefault();
+    const cx=e.touches[0].clientX;
+    updateIndicator(cx);
+  }
+
+  function onEnd(){
+    document.removeEventListener('touchmove',onMove);
+    if(!dragPid) return;
+    if(indicator){ indicator.remove(); indicator=null; }
+    getTabs().forEach(t=>{ t.classList.remove('dragging-src'); });
+    if(dropIdx!==origIdx && dropIdx>=0){
+      if(origBtn) origBtn._wasDragged=true;
+      const proc=data.processes.splice(origIdx,1)[0];
+      data.processes.splice(dropIdx,0,proc);
+      saveData(); renderTabs(); updateHeadSub();
+    }
+    dragPid=null; origBtn=null; origIdx=-1; dropIdx=-1;
+  }
+
+  bar.addEventListener('touchstart',e=>{
+    const btn=e.target.closest('[data-pid]'); if(!btn) return;
+    const t=e.touches[0];
+    touchSX=t.clientX; touchSY=t.clientY;
+    lpt=setTimeout(()=>{ lpt=null; enter(btn,touchSX,touchSY); },500);
+  },{passive:true});
+  bar.addEventListener('touchmove',e=>{
+    if(!lpt) return;
+    const t=e.touches[0];
+    if(Math.abs(t.clientX-touchSX)>6||Math.abs(t.clientY-touchSY)>6) cancelLP();
+  },{passive:true});
+  bar.addEventListener('touchend',cancelLP);
+  bar.addEventListener('touchcancel',cancelLP);
+})();
+
+/* ===== サブタブ長押し並び替え（挿入マーカー方式） ===== */
+(()=>{
+  const sb=()=>$("subtabbar");
+  let dragSid=null,origBtn=null,origIdx=-1,dropIdx=-1;
+  let dragGhost=null,indicator=null,ghostW=0,ghostH=0;
+  let lpt=null,touchSX=0,touchSY=0;
+
+  const getTabs=()=>Array.from(sb().querySelectorAll('[data-sid]'));
+  const cancelLP=()=>{ if(lpt){clearTimeout(lpt);lpt=null;} };
+
+  function enter(btn,cx,cy){
+    if(!editMode) return;
+    if(navigator.vibrate) navigator.vibrate(40);
+    dragSid=btn.dataset.sid;
+    origBtn=btn;
+    const p=curProcess(); if(!p) return;
+    origIdx=p.subtabs.findIndex(s=>s.id===dragSid);
+    dropIdx=origIdx;
+
+    const rect=btn.getBoundingClientRect();
+    ghostW=rect.width; ghostH=rect.height;
+
+    dragGhost=document.createElement('div');
+    dragGhost.style.cssText=
+      `position:fixed;top:${rect.top+rect.height/2-4}px;left:${cx-ghostW/2}px;`+
+      `width:${ghostW}px;height:8px;pointer-events:none;z-index:999;`+
+      `background:var(--accent);border-radius:4px;opacity:.9;`;
+    document.body.appendChild(dragGhost);
+
+    indicator=document.createElement('div');
+    indicator.className='stab-insert-indicator';
+    sb().style.position='relative';
+    sb().appendChild(indicator);
+
+    btn.classList.add('stab-drag-src');
+
+    document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('touchend',onEnd,{once:true});
+    document.addEventListener('touchcancel',onEnd,{once:true});
+    updateIndicator(cx);
+  }
+
+  function updateIndicator(cx){
+    const tabs=getTabs().filter(t=>t!==origBtn);
+    const barRect=sb().getBoundingClientRect();
+    let insertBefore=-1;
+    for(let i=0;i<tabs.length;i++){
+      const r=tabs[i].getBoundingClientRect();
+      if(cx<r.left+r.width/2){ insertBefore=i; break; }
+    }
+    let lineLeft;
+    if(tabs.length===0){ lineLeft=4; }
+    else if(insertBefore===0){ lineLeft=tabs[0].getBoundingClientRect().left-barRect.left-6; }
+    else if(insertBefore>0){ lineLeft=tabs[insertBefore-1].getBoundingClientRect().right-barRect.left+3; }
+    else{ lineLeft=tabs[tabs.length-1].getBoundingClientRect().right-barRect.left+3; }
+    indicator.style.left=Math.max(0,lineLeft)+'px';
+
+    const p=curProcess(); if(!p) return;
+    const otherSids=tabs.map(t=>t.dataset.sid);
+    if(insertBefore<0){
+      const lastSid=otherSids[otherSids.length-1];
+      dropIdx=p.subtabs.findIndex(s=>s.id===lastSid)+1;
+      if(origIdx<=dropIdx-1) dropIdx--;
+    } else {
+      const beforeSid=otherSids[insertBefore];
+      dropIdx=p.subtabs.findIndex(s=>s.id===beforeSid);
+      if(origIdx<dropIdx) dropIdx--;
+    }
+    dropIdx=Math.max(0,Math.min(p.subtabs.length-1,dropIdx));
+  }
+
+  function onMove(e){
+    if(!dragSid) return;
+    e.preventDefault();
+    const cx=e.touches[0].clientX;
+    dragGhost.style.left=(cx-ghostW/2)+'px';
+    updateIndicator(cx);
+  }
+
+  function onEnd(){
+    document.removeEventListener('touchmove',onMove);
+    if(!dragSid) return;
+    if(dragGhost){ dragGhost.remove(); dragGhost=null; }
+    if(indicator){ indicator.remove(); indicator=null; }
+    getTabs().forEach(t=>t.classList.remove('stab-drag-src'));
+    const p=curProcess();
+    if(p && dropIdx!==origIdx && dropIdx>=0){
+      const sub=p.subtabs.splice(origIdx,1)[0];
+      p.subtabs.splice(dropIdx,0,sub);
+      touch(p); saveData(); renderProcessHead();
+    }
+    dragSid=null; origBtn=null; origIdx=-1; dropIdx=-1;
+  }
+
+  document.addEventListener('touchstart',e=>{
+    if(!editMode) return;
+    const bar=sb(); if(!bar) return;
+    const btn=e.target.closest('[data-sid]');
+    if(!btn||!bar.contains(btn)) return;
+    const t=e.touches[0];
+    touchSX=t.clientX; touchSY=t.clientY;
+    lpt=setTimeout(()=>{ lpt=null; enter(btn,touchSX,touchSY); },500);
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!lpt) return;
+    const t=e.touches[0];
+    if(Math.abs(t.clientX-touchSX)>6||Math.abs(t.clientY-touchSY)>6) cancelLP();
+  },{passive:true});
+  document.addEventListener('touchend',cancelLP);
+  document.addEventListener('touchcancel',cancelLP);
+})();
+
+$("editToggleBtn").onclick=async()=>{
+  if(!editMode){
+    dataSnapshot=JSON.parse(JSON.stringify(data));
+    editMode=true;
+    $("editToggleBtn").textContent="✔ 保存";
+    $("editToggleBtn").classList.add("edit-active");
+    $("cancelEditBtn").style.display="";
+    $("menuBtn").style.display="none";
+  } else {
+    dataSnapshot=null;
+    editMode=false;
+    $("editToggleBtn").textContent="✏️ 編集";
+    $("editToggleBtn").classList.remove("edit-active");
+    $("cancelEditBtn").style.display="none";
+    $("menuBtn").style.display="";
+    await saveData();
+  }
+  renderAll();
+};
+$("cancelEditBtn").onclick=async()=>{
+  if(!dataSnapshot) return;
+  if(!confirm("編集内容を破棄して戻りますか？")) return;
+  data=dataSnapshot;
+  dataSnapshot=null;
+  editMode=false;
+  $("editToggleBtn").textContent="✏️ 編集";
+  $("editToggleBtn").classList.remove("edit-active");
+  $("cancelEditBtn").style.display="none";
+  $("menuBtn").style.display="";
+  await saveData();
+  renderAll();
+};
+/* ============================================================
+   ライトボックス（写真拡大・ピンチズーム）
+   ============================================================ */
+function openLightbox(src, annotations){
+  const lb=$("lightbox");
+  const img=$("lightboxImg");
+  const layer=$("lightboxAnnoLayer");
+  img.src=src;
+  img.style.transform=""; $("lightboxInner").style.transform="";
+  lb._scale=1; lb._tx=0; lb._ty=0;
+  layer.innerHTML="";
+  const doRender=()=>renderAnnotations(layer,annotations||[],img);
+  img.onload=doRender;
+  if(img.complete && img.naturalWidth) doRender();
+  lb.style.display="block";
+  document.body.style.overflow="hidden";
+}
+function closeLightbox(){
+  $("lightbox").style.display="none";
+  document.body.style.overflow="";
+}
+$("lightboxClose").onclick=closeLightbox;
+$("lightboxClose").addEventListener("touchend",e=>{ e.stopPropagation(); e.preventDefault(); closeLightbox(); });
+$("lightbox").addEventListener("click",e=>{
+  if(e.target===$("lightbox")||e.target===$("lightboxImgWrap")) closeLightbox();
+});
+
+(()=>{
+  const lb=$("lightbox");
+  const img=$("lightboxImg");
+  const inner=$("lightboxInner");
+  let scale=1,tx=0,ty=0;
+  let lastDist=0,lastMid={x:0,y:0};
+  let ptrs={};
+
+  function applyTransform(){
+    inner.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+  }
+
+  lb.addEventListener("touchstart",e=>{
+    e.preventDefault();
+    Array.from(e.changedTouches).forEach(t=>{ ptrs[t.identifier]={x:t.clientX,y:t.clientY}; });
+    const pts=Object.values(ptrs);
+    if(pts.length===2){
+      lastDist=Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y);
+      lastMid={x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2};
+      _lastTap=0; // マルチタッチ開始でダブルタップ判定をリセット
+    }
+  },{passive:false});
+
+  lb.addEventListener("touchmove",e=>{
+    e.preventDefault();
+    // 古い位置を保存してから更新
+    const old={};
+    Array.from(e.changedTouches).forEach(t=>{
+      if(ptrs[t.identifier]) old[t.identifier]=ptrs[t.identifier];
+      ptrs[t.identifier]={x:t.clientX,y:t.clientY};
+    });
+    const pts=Object.values(ptrs);
+    if(pts.length===2){
+      const dist=Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y);
+      const mid={x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2};
+      if(lastDist>0){
+        const ratio=dist/lastDist;
+        scale=Math.min(Math.max(scale*ratio,0.5),6);
+        tx+=(mid.x-lastMid.x);
+        ty+=(mid.y-lastMid.y);
+      }
+      lastDist=dist; lastMid=mid;
+      applyTransform();
+    } else if(pts.length===1){
+      const t=e.changedTouches[0];
+      const prev=old[t.identifier]; // 更新前の位置を参照
+      if(prev){
+        tx+=t.clientX-prev.x;
+        ty+=t.clientY-prev.y;
+        applyTransform();
+      }
+    }
+  },{passive:false});
+
+  let _lastTap=0;
+  lb.addEventListener("touchend",e=>{
+    Array.from(e.changedTouches).forEach(t=>delete ptrs[t.identifier]);
+    lastDist=0;
+    if(Object.keys(ptrs).length>0) return; // まだ指が残っている
+    // ダブルタップ: 1倍↔2倍トグル
+    if(e.changedTouches.length===1){
+      const now=Date.now();
+      if(now-_lastTap<300){
+        if(scale>1.05){ scale=1;tx=0;ty=0; }
+        else {
+          const t=e.changedTouches[0];
+          const cx=t.clientX-lb.clientWidth/2;
+          const cy=t.clientY-lb.clientHeight/2;
+          scale=2.5; tx=-cx*(scale-1); ty=-cy*(scale-1);
+        }
+        applyTransform();
+        _lastTap=0;
+      } else { _lastTap=now; }
+    }
+  },{passive:false});
+})();
+
+$("menuBtn").onclick=()=>{ $("appVersionLabel").textContent="アプリバージョン："+APP_VERSION; showSheet("menuSheet"); };
+$("miExport").onclick=async ()=>{
+  if(!confirm("データをJSONファイルとして書き出します。よろしいですか？")) return;
+  hideSheets();
+  toast("書き出し中…");
+  const photos=await idbAllPhotos();
+  const bundle={ app:"prime_manual", exportedAt:nowISO(), data, photos };
+  const blob=new Blob([JSON.stringify(bundle)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=`手順書_${todayStr().replace(/\//g,"")}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast("JSONを書き出しました");
+};
+$("miImport").onclick=()=>{ hideSheets(); $("importInput").value=""; $("importInput").click(); };
+$("importInput").addEventListener("change",async e=>{
+  const file=e.target.files[0]; if(!file) return;
+  if(!confirm("現在のデータを、読み込むファイルの内容で置き換えます。よろしいですか？\n（事前に書き出しでバックアップ推奨）")) return;
+  try{
+    const txt=await file.text();
+    const bundle=JSON.parse(txt);
+    if(!bundle.data||!bundle.data.processes) throw new Error("形式が違います");
+    // 写真をDBへ
+    const photos=bundle.photos||{};
+    // 既存写真クリア
+    await clearStore("photos");
+    photoCache={};
+    for(const k in photos){ await idbSet("photos",k,photos[k]); photoCache[k]=photos[k]; }
+    data=bundle.data;
+    await saveData();
+    renderAll();
+    toast("読み込みました");
+  }catch(err){ toast("読み込みに失敗：形式をご確認ください"); }
+});
+function clearStore(store){
+  return new Promise((res,rej)=>{
+    const t=db.transaction(store,"readwrite").objectStore(store).clear();
+    t.onsuccess=()=>res(); t.onerror=()=>rej(t.error);
+  });
+}
+
+/* ============================================================
+   シート開閉
+   ============================================================ */
+function showSheet(id){ $(id).classList.remove("hidden"); }
+function hideSheets(){ document.querySelectorAll(".overlay").forEach(o=>o.classList.add("hidden")); }
+document.querySelectorAll(".overlay").forEach(o=>{
+  o.addEventListener("click",e=>{ if(e.target===o) hideSheets(); });
+});
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=hideSheets);
+
+/* ============================================================
+   ユーティリティ
+   ============================================================ */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+let toastTimer=null;
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+// 画面回転・リサイズで注釈再配置
+window.addEventListener("resize",()=>{ if(annoState) drawAnnoMarks(); else { renderContent(); updateLayout(); } });
+
+// スクロールで工程タイトル・説明を隠す
+window.addEventListener("scroll",()=>{
+  const ph=$("processHead");
+  if(!ph||ph.style.display==="none") return;
+  if(window.scrollY>50) ph.classList.add("head-collapsed");
+  else ph.classList.remove("head-collapsed");
+},{passive:true});
+
+/* ============================================================
+   ホーム画面
+   ============================================================ */
+let homeEditMode=false;
+
+function renderHome(){
+  const grid=$("homeGrid");
+  grid.innerHTML="";
+  grid.parentElement.classList.toggle("home-edit-mode",homeEditMode);
+  const builtins=[
+    {key:"tejunsho",title:"プライム手順書",icon:"📝",desc:"工程・手順の管理",cls:"mod-tejunsho"},
+  ];
+  const customs=homeApps.map(a=>({key:a.key,title:a.title,icon:a.icon,desc:"",cls:a.color||"mod-custom-prime",custom:true,appObj:a}));
+  [...builtins,...customs].forEach(app=>{
+    const btn=document.createElement("button");
+    btn.className=`home-tile ${app.cls}${app.custom?" editable":""}`;
+    btn.dataset.module=app.key;
+    btn.innerHTML=`<span class="tile-icon">${app.icon}</span><div class="tile-text"><span class="tile-name">${escapeHtml(app.title)}</span>${app.desc?`<span class="tile-desc">${app.desc}</span>`:''}</div><span class="tile-edit-badge">✏️</span>`;
+    if(app.custom && homeEditMode){
+      btn.onclick=e=>{ e.stopPropagation(); openAddAppSheet(app.appObj); };
+    }
+    grid.appendChild(btn);
+  });
+  if(!homeEditMode){
+    const addBtn=document.createElement("button");
+    addBtn.className="home-tile mod-add";
+    addBtn.innerHTML=`<span class="tile-icon">＋</span><div class="tile-text"><span class="tile-name">アプリを追加</span><span class="tile-desc">新しい手順書アプリを作成</span></div>`;
+    addBtn.onclick=()=>openAddAppSheet();
+    grid.appendChild(addBtn);
+  }
+  $("homeEditBtn").textContent=homeEditMode?"完了":"編集";
+  $("homeEditBtn").classList.toggle("active",homeEditMode);
+}
+
+$("homeEditBtn").onclick=()=>{ homeEditMode=!homeEditMode; renderHome(); };
+
+function showHome(){
+  if(editMode) toggleEdit();
+  hideSheets();
+  currentModule=null;
+  homeEditMode=false;
+  $("homeScreen").style.display="block";
+  $("homeBtn").style.display="none";
+  $("editToggleBtn").style.display="none";
+  $("menuBtn").style.display="none";
+  $("appTitle").textContent="手順書管理";
+  const _dil=$("docInfoLabel"); if(_dil) _dil.textContent="";
+  renderHome();
+}
+
+async function openModule(key){
+  const mod=getModuleConfig(key);
+  if(!mod) return;
+  currentModule=key;
+  $("homeScreen").style.display="none";
+  $("homeBtn").style.display="";
+  $("editToggleBtn").style.display="";
+  $("menuBtn").style.display="";
+  $("appTitle").textContent=mod.title;
+  $("miExcelExport").style.display=mod.hasExcel?"":"none";
+  $("miExcelShare").style.display=(mod.hasExcel&&!!navigator.share)?"":"none";
+  $("miPrint").style.display=mod.hasExcel?"":"none";
+  $("miPptxExport").style.display=mod.hasExcel?"":"none";
+  $("miPptxShare").style.display=(mod.hasExcel&&!!navigator.share)?"":"none";
+  const app=homeApps.find(a=>a.key===key);
+  const seeds={tejunsho:seedData, manual:seedDataManual};
+  const seedFn=seeds[key]||(app?()=>seedDataCustom(app.title):seedData);
+  let d=await idbGet("meta",mod.dataKey);
+  if(!d||d.version<2){ d=seedFn(); await idbSet("meta",mod.dataKey,d); }
+  else if(d.version<3){
+    d.version=3;
+    (d.processes||[]).forEach(p=>(p.subtabs||[]).forEach(s=>(s.steps||[]).forEach(st=>{ if(!st.subSteps) st.subSteps=[]; })));
+    await idbSet("meta",mod.dataKey,d);
+  }
+  data=d;
+  photoCache=await idbAllPhotos();
+  renderAll();
+}
+
+$("homeScreen").addEventListener("click",e=>{
+  const tile=e.target.closest("[data-module]");
+  if(tile) openModule(tile.dataset.module);
+});
+$("homeBtn").onclick=showHome;
+
+/* ============================================================
+   アプリ追加モーダル
+   ============================================================ */
+let addAppSelectedIcon="📋", addAppEditTarget=null;
+function openAddAppSheet(existingApp){
+  addAppEditTarget=existingApp||null;
+  addAppSelectedIcon=existingApp?.icon||"📋";
+  $("addAppNameInput").value=existingApp?.title||"新規マニュアル";
+  $("addAppIconPick").querySelectorAll(".icon-opt").forEach(b=>b.classList.toggle("sel",b.dataset.icon===addAppSelectedIcon));
+  $("addAppSheetTitle").textContent=existingApp?"アプリを編集":"アプリを追加";
+  $("addAppSaveBtn").textContent=existingApp?"保存":"作成";
+  $("addAppDelBtn").style.display=existingApp?"block":"none";
+  showSheet("addAppSheet");
+}
+$("addAppIconPick").querySelectorAll(".icon-opt").forEach(b=>{
+  b.onclick=()=>{ addAppSelectedIcon=b.dataset.icon; $("addAppIconPick").querySelectorAll(".icon-opt").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); };
+});
+$("addAppSaveBtn").onclick=async()=>{
+  const name=$("addAppNameInput").value.trim();
+  if(!name){ toast("アプリ名を入力してください"); return; }
+  if(addAppEditTarget){
+    addAppEditTarget.title=name; addAppEditTarget.icon=addAppSelectedIcon;
+    await saveHomeApps(); hideSheets(); renderHome(); toast(`「${name}」を更新しました`);
+  } else {
+    const key="app_"+uid();
+    homeApps.push({key,title:name,icon:addAppSelectedIcon,color:"mod-custom-yellow"});
+    await saveHomeApps(); hideSheets(); await openModule(key);
+  }
+};
+$("addAppDelBtn").onclick=async()=>{
+  if(!addAppEditTarget) return;
+  if(!confirm(`「${addAppEditTarget.title}」を削除しますか？\n（アプリのデータも消えます）`)) return;
+  // データも削除
+  await new Promise(res=>{ const t=db.transaction("meta","readwrite").objectStore("meta").delete(`cust_${addAppEditTarget.key}`); t.onsuccess=res; });
+  homeApps=homeApps.filter(a=>a.key!==addAppEditTarget.key);
+  await saveHomeApps(); hideSheets(); renderHome(); toast("削除しました");
+};
+
+/* ============================================================
+   Excelエクスポート（マニュアルモジュール）
+   ============================================================ */
+$("miExcelShare").onclick=async()=>{
+  const p=curProcess(); const s=curSubtab();
+  if(!p||!s){ toast("手順がありません"); return; }
+  if(!confirm(`「${p.name}」をExcelで共有しますか？`)) return;
+  hideSheets();
+  toast("Excel作成中…");
+  try{
+    const mod=getModuleConfig(currentModule);
+    const blob=await buildExcelBlob(p,s,mod);
+    const updDate=fmtDate(p.updatedAt||data.updatedAt);
+    const fileName=`${mod.title}_${p.name}_${updDate.replace(/\//g,"-")}.xlsx`;
+    const file=new File([blob],fileName,{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    await navigator.share({files:[file],title:fileName});
+  }catch(e){ if(e.name!=="AbortError") toast("共有エラー："+e.message); }
+};
+
+$("miExcelExport").onclick=async()=>{
+  const p=curProcess(); const s=curSubtab();
+  if(!p||!s){ toast("手順がありません"); return; }
+  if(!confirm(`「${p.name}」をExcelに出力しますか？`)) return;
+  hideSheets();
+  toast("Excel出力中…");
+  const mod=getModuleConfig(currentModule);
+  if(currentModule==="manual") await exportToExcel(p,s);
+  else await exportCustomToExcel(p,s,mod);
+};
+
+$("miPrint").onclick=()=>{
+  const p=curProcess();
+  if(!p){ toast("手順がありません"); return; }
+  if(!confirm(`「${p.name}」を印刷しますか？`)) return;
+  hideSheets();
+  const origSubtab=data.activeSubtab;
+  const container=$("content");
+  const subtabs=p.subtabs||[];
+  if(subtabs.length<=1){
+    window.print();
+    return;
+  }
+  // 全サブタブをまとめて表示してから印刷
+  let combined="";
+  subtabs.forEach((s,idx)=>{
+    data.activeSubtab=s.id;
+    renderContent();
+    const sec=`<div class="print-subtab-section">`
+      +(subtabs.length>1?`<div class="print-subtab-title">${escapeHtml(s.name)}</div>`:"")
+      +container.innerHTML
+      +`</div>`;
+    combined+=sec;
+  });
+  container.innerHTML=combined;
+  window.print();
+  // 元に戻す
+  data.activeSubtab=origSubtab;
+  renderContent();
+};
+
+$("miPptxExport").onclick=async()=>{
+  const p=curProcess(); const s=curSubtab();
+  if(!p||!s){ toast("手順がありません"); return; }
+  if(!confirm(`「${p.name}」をPowerPointに出力しますか？`)) return;
+  const mod=getModuleConfig(currentModule);
+  await exportToPptx(p,s,mod);
+};
+
+$("miPptxShare").onclick=async()=>{
+  const p=curProcess(); const s=curSubtab();
+  if(!p||!s){ toast("手順がありません"); return; }
+  if(!confirm(`「${p.name}」をPowerPointでメール・LINEに共有しますか？`)) return;
+  const mod=getModuleConfig(currentModule);
+  await exportToPptx(p,s,mod);
+};
+
+async function buildExcelBlob(proc,sub,mod){
+  const wb=new ExcelJS.Workbook();
+  const sheetName=(proc.name||"手順").slice(0,31);
+  const ws=wb.addWorksheet(sheetName);
+  // A4縦・印刷設定
+  ws.pageSetup={paperSize:9,orientation:"portrait",fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.5,right:0.5,top:0.75,bottom:0.75,header:0.3,footer:0.3}};
+  ws.pageSetup.printTitlesRow="$1:$2"; // 2枚目以降もタイトル行・ヘッダー行を繰り返す
+  const updDate=fmtDate(proc.updatedAt||data.updatedAt);
+  ws.mergeCells("A1:D1");
+  const tc=ws.getCell("A1");
+  tc.value=`${mod.title} ／ ${proc.name}`;
+  tc.font={name:"メイリオ",size:14,bold:true,color:{argb:"FFFFFFFF"}};
+  tc.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F6FEB"}};
+  tc.alignment={horizontal:"center",vertical:"middle"};
+  ws.getRow(1).height=32;
+  ws.getCell("E1").value="更新日："+updDate;
+  ws.getCell("E1").font={name:"メイリオ",size:10,color:{argb:"FF666666"}};
+  ws.getCell("E1").alignment={horizontal:"right",vertical:"middle"};
+  const headers=["No.","手順内容","メモ・詳細","サブ手順","チェック"];
+  ["A2","B2","C2","D2","E2"].forEach((addr,i)=>{
+    const c=ws.getCell(addr);
+    c.value=headers[i];
+    c.font={name:"メイリオ",size:10,bold:true,color:{argb:"FFFFFFFF"}};
+    c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF334155"}};
+    c.alignment={horizontal:"center",vertical:"middle"};
+    c.border={top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}};
+  });
+  ws.getRow(2).height=22;
+  ws.getColumn(1).width=5; ws.getColumn(2).width=28; ws.getColumn(3).width=24; ws.getColumn(4).width=20; ws.getColumn(5).width=8;
+  // A4縦1ページに収まる行数を計算（ポイント換算）
+  // 印刷可能高さ≒693pt（A4 297mm - 上下マージン0.75inch×2）、タイトル32+ヘッダー22=54pt
+  const ROW_H=40, PAGE_H=693, HEADER_H=54, ROWS_PER_PAGE=Math.floor((PAGE_H-HEADER_H)/ROW_H);
+  let rowIdx=3, pageRowCount=0;
+  (sub.steps||[]).forEach((st,i)=>{
+    if(pageRowCount>0 && pageRowCount>=ROWS_PER_PAGE){
+      ws.getRow(rowIdx-1).addPageBreak();
+      pageRowCount=0;
+    }
+    const bg=i%2===1?"FFF8FAFC":"FFFFFFFF";
+    ws.getRow(rowIdx).height=ROW_H;
+    const subText=(st.subSteps||[]).map((ss,j)=>`${i+1}-${j+1}. ${ss.text||""}`).join("\n");
+    [i+1, st.text||"", st.note||"", subText, "□"].forEach((v,ci)=>{
+      const c=ws.getCell(rowIdx,ci+1);
+      c.value=v; c.font={name:"メイリオ",size:10};
+      c.alignment={wrapText:true,vertical:"top",horizontal:ci===0||ci===4?"center":"left"};
+      c.fill={type:"pattern",pattern:"solid",fgColor:{argb:bg}};
+      c.border={top:{style:"thin",color:{argb:"FFE2E8F0"}},bottom:{style:"thin",color:{argb:"FFE2E8F0"}},left:{style:"thin",color:{argb:"FFE2E8F0"}},right:{style:"thin",color:{argb:"FFE2E8F0"}}};
+    });
+    rowIdx++; pageRowCount++;
+  });
+  const buf=await wb.xlsx.writeBuffer();
+  return new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+
+async function exportCustomToExcel(proc,sub,mod){
+  try{
+    const blob=await buildExcelBlob(proc,sub,mod);
+    const updDate=fmtDate(proc.updatedAt||data.updatedAt);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url;
+    a.download=`${mod.title}_${proc.name}_${updDate.replace(/\//g,"-")}.xlsx`;
+    a.click(); URL.revokeObjectURL(url);
+    toast("Excel出力完了");
+  }catch(e){ console.error(e); toast("Excel出力エラー："+e.message); }
+}
+
+async function exportToExcel(proc,sub){
+  try{
+    const wb=new ExcelJS.Workbook();
+    const ws=wb.addWorksheet(proc.name||"マニュアル");
+    // A4縦・印刷設定
+    ws.pageSetup={paperSize:9,orientation:"portrait",fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.5,right:0.5,top:0.75,bottom:0.75,header:0.3,footer:0.3}};
+    ws.pageSetup.printTitlesRow="$1:$2";
+    const updDate=fmtDate(proc.updatedAt||data.updatedAt);
+    ws.mergeCells("A1:D1");
+    const tc=ws.getCell("A1");
+    tc.value=proc.name||"マニュアル";
+    tc.font={name:"メイリオ",size:14,bold:true,color:{argb:"FFFFFFFF"}};
+    tc.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F6FEB"}};
+    tc.alignment={horizontal:"center",vertical:"middle"};
+    ws.getRow(1).height=32;
+    ws.getCell("E1").value="更新日："+updDate;
+    ws.getCell("E1").font={name:"メイリオ",size:10,color:{argb:"FF666666"}};
+    ws.getCell("E1").alignment={horizontal:"right",vertical:"middle"};
+    ["A2","B2","C2","D2","E2"].forEach(a=>{
+      const c=ws.getCell(a);
+      c.font={name:"メイリオ",size:10,bold:true,color:{argb:"FFFFFFFF"}};
+      c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF334155"}};
+      c.alignment={horizontal:"center",vertical:"middle"};
+    });
+    ws.getCell("A2").value="No."; ws.getCell("B2").value="写真";
+    ws.mergeCells("C2:D2"); ws.getCell("C2").value="コメント";
+    ws.getCell("E2").value="メモ（サブ手順）";
+    ws.getRow(2).height=22;
+    ws.getColumn(1).width=5; ws.getColumn(2).width=20;
+    ws.getColumn(3).width=26; ws.getColumn(4).width=7; ws.getColumn(5).width=20;
+    // 写真行は高さ100pt≒35mm。A4縦で1ページ約6〜7行が目安
+    const ROW_H=100, PAGE_H=693, HEADER_H=54, ROWS_PER_PAGE=Math.floor((PAGE_H-HEADER_H)/ROW_H);
+    let rowIdx=3, pageRowCount=0;
+    for(let i=0;i<sub.steps.length;i++){
+      const st=sub.steps[i];
+      if(pageRowCount>0 && pageRowCount>=ROWS_PER_PAGE){
+        ws.getRow(rowIdx-1).addPageBreak();
+        pageRowCount=0;
+      }
+      ws.getRow(rowIdx).height=ROW_H;
+      ws.getCell(`A${rowIdx}`).value=i+1;
+      ws.getCell(`A${rowIdx}`).alignment={horizontal:"center",vertical:"top"};
+      ws.getCell(`A${rowIdx}`).font={name:"メイリオ",size:10};
+      if(st.photoId&&photoCache[st.photoId]){
+        try{
+          const dataUrl=photoCache[st.photoId];
+          const base64=dataUrl.split(",")[1];
+          const ext=dataUrl.startsWith("data:image/png")?"png":"jpeg";
+          const imgId=wb.addImage({base64,extension:ext});
+          ws.addImage(imgId,{tl:{col:1,row:rowIdx-1},br:{col:2,row:rowIdx},editAs:"oneCell"});
+        }catch(e){}
+      }
+      ws.mergeCells(`C${rowIdx}:D${rowIdx}`);
+      const cc=ws.getCell(`C${rowIdx}`);
+      cc.value=(st.title?(st.title+"\n"):"")+(st.text||"");
+      cc.alignment={wrapText:true,vertical:"top"}; cc.font={name:"メイリオ",size:10};
+      const subText=(st.subSteps||[]).map((ss,j)=>`${i+1}-${j+1} ${ss.title?ss.title+": ":""}${ss.text||""}`).join("\n");
+      ws.getCell(`E${rowIdx}`).value=subText||"";
+      ws.getCell(`E${rowIdx}`).alignment={wrapText:true,vertical:"top"};
+      ws.getCell(`E${rowIdx}`).font={name:"メイリオ",size:9};
+      ["A","B","C","E"].forEach(col=>{
+        ws.getCell(`${col}${rowIdx}`).border={top:{style:"thin",color:{argb:"FFE2E8F0"}},bottom:{style:"thin",color:{argb:"FFE2E8F0"}},left:{style:"thin",color:{argb:"FFE2E8F0"}},right:{style:"thin",color:{argb:"FFE2E8F0"}}};
+        if(i%2===1) ws.getCell(`${col}${rowIdx}`).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF8FAFC"}};
+      });
+      rowIdx++; pageRowCount++;
+    }
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url;
+    a.download=`${proc.name||"マニュアル"}_${updDate.replace(/\//g,"-")}.xlsx`;
+    a.click(); URL.revokeObjectURL(url);
+    toast("Excel出力完了");
+  }catch(e){ console.error(e); toast("Excel出力エラー："+e.message); }
+}
+
+/* ============================================================
+   PowerPointエクスポート
+   ============================================================ */
+async function bakeAnnotations(dataUrl, annotations){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const cv=document.createElement('canvas');
+      cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+      const ctx=cv.getContext('2d');
+      ctx.drawImage(img,0,0);
+      const iw=cv.width, ih=cv.height, base=Math.min(iw,ih);
+      (annotations||[]).forEach(a=>{
+        const sizePx=Math.max(14,(a.size/100)*base);
+        const x=(a.x/100)*iw, y=(a.y/100)*ih;
+        ctx.strokeStyle='#ff2222'; ctx.fillStyle='#ff2222';
+        if(a.type==='circle'){
+          const r=sizePx/2;
+          ctx.lineWidth=Math.max(2,base*0.006);
+          ctx.beginPath(); ctx.arc(x+r,y+r,r,0,Math.PI*2); ctx.stroke();
+        } else if(a.type==='rect'){
+          const wp=Math.max(20,(a.size/100)*iw), hp=Math.max(10,wp*0.6*(a.hRatio||1));
+          ctx.lineWidth=Math.max(2,base*0.005);
+          ctx.strokeRect(x,y,wp,hp);
+        } else if(a.type==='num'){
+          const r=sizePx/2;
+          ctx.beginPath(); ctx.arc(x+r,y+r,r,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#fff';
+          ctx.font=`bold ${Math.round(sizePx*0.55)}px sans-serif`;
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(a.text||'',x+r,y+r);
+          ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+          ctx.fillStyle='#ff2222';
+        } else if(a.type==='text'){
+          ctx.font=`bold ${Math.round(sizePx)}px sans-serif`;
+          ctx.shadowColor='rgba(255,255,255,.85)'; ctx.shadowBlur=3;
+          ctx.fillText(a.text||'',x,y+sizePx); ctx.shadowBlur=0;
+        } else if(a.type==='arrow'){
+          ctx.font=`${Math.round(sizePx*1.4)}px sans-serif`;
+          ctx.shadowColor='rgba(255,255,255,.85)'; ctx.shadowBlur=3;
+          ctx.fillText('➜',x,y+sizePx*1.4); ctx.shadowBlur=0;
+        }
+      });
+      resolve({dataUrl:cv.toDataURL('image/jpeg',0.92),w:iw,h:ih});
+    };
+    img.src=dataUrl;
+  });
+}
+
+async function exportToPptx(proc,sub,mod){
+  hideSheets();
+  toast('PowerPoint作成中…');
+  try{
+    if(typeof PptxGenJS==='undefined'){
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+        s.onload=res; s.onerror=()=>rej(new Error('ライブラリの読み込みに失敗'));
+        document.head.appendChild(s);
+      });
+    }
+    const pptx=new PptxGenJS();
+    pptx.defineLayout({name:'A4P',width:7.48,height:10.58});
+    pptx.layout='A4P';
+    const updDate=fmtDate(proc.updatedAt||data.updatedAt);
+    const steps=sub.steps||[];
+
+    // ── タイトルスライド ──
+    {
+      const sl=pptx.addSlide();
+      sl.background={color:'F1F5F9'};
+      sl.addShape('rect',{x:0,y:3.2,w:7.48,h:3.2,fill:{color:'1F6FEB'}});
+      sl.addText(mod.title,{x:0.5,y:3.35,w:6.48,h:0.5,fontSize:12,color:'CCE4FF',align:'center',valign:'middle'});
+      sl.addText(proc.name,{x:0.5,y:3.9,w:6.48,h:1.4,fontSize:24,bold:true,color:'FFFFFF',align:'center',valign:'middle'});
+      sl.addText(`更新日：${updDate}　　全 ${steps.length} 手順`,{x:0.5,y:5.5,w:6.48,h:0.4,fontSize:11,color:'CCE4FF',align:'center'});
+    }
+
+    // ── 手順スライド（1手順=1スライド）──
+    for(let i=0;i<steps.length;i++){
+      const st=steps[i];
+      const sl=pptx.addSlide();
+      sl.background={color:'FFFFFF'};
+
+      // タイトルバー
+      sl.addShape('rect',{x:0,y:0,w:7.48,h:0.52,fill:{color:'1F6FEB'}});
+      sl.addText(`${i+1}`,{x:0.12,y:0,w:0.5,h:0.52,fontSize:18,bold:true,color:'FFFFFF',valign:'middle'});
+      sl.addText(st.title||'（タイトルなし）',{x:0.65,y:0,w:5.8,h:0.52,fontSize:14,bold:true,color:'FFFFFF',valign:'middle'});
+      sl.addText(`${i+1} / ${steps.length}`,{x:6.5,y:0,w:0.9,h:0.52,fontSize:9,color:'CCE4FF',align:'right',valign:'middle'});
+
+      const footerY=10.22;
+      let cy=0.62;
+
+      // 写真（アノテーション焼き込み）
+      if(st.photoId&&photoCache[st.photoId]){
+        const baked=await bakeAnnotations(photoCache[st.photoId],st.annotations||[]);
+        const maxW=7.08,maxH=5.0;
+        const scale=Math.min(maxW/baked.w,maxH/baked.h);
+        const dw=baked.w*scale, dh=baked.h*scale;
+        const ix=(7.48-dw)/2;
+        sl.addImage({data:baked.dataUrl,x:ix,y:cy,w:dw,h:dh});
+        cy+=dh+0.18;
+      }
+
+      // 説明テキスト
+      if(st.text&&cy<footerY-0.5){
+        const th=Math.min(1.6,footerY-cy-0.1);
+        sl.addText(st.text,{x:0.2,y:cy,w:7.08,h:th,fontSize:11,color:'1e293b',valign:'top',wrap:true});
+        cy+=th;
+      }
+
+      // サブ手順
+      if(st.subSteps&&st.subSteps.length>0&&cy<footerY-0.3){
+        const remH=footerY-cy-0.1;
+        const runs=[];
+        st.subSteps.forEach((ss,j)=>{
+          if(j>0) runs.push({text:'\n',options:{fontSize:4}});
+          runs.push({text:`${i+1}-${j+1}  ${ss.title||''}`,options:{bold:true,fontSize:10.5,color:'1e293b'}});
+          if(ss.text) runs.push({text:`\n   ${ss.text}`,options:{fontSize:10,color:'475569'}});
+        });
+        sl.addText(runs,{x:0.2,y:cy,w:7.08,h:remH,fontSize:10.5,valign:'top',wrap:true});
+      }
+
+      // フッター
+      sl.addShape('rect',{x:0.15,y:footerY,w:7.18,h:0.008,fill:{color:'CBD5E1'},line:{color:'CBD5E1',width:0}});
+      sl.addText(`${mod.title}　${proc.name}　更新日：${updDate}`,{
+        x:0.15,y:footerY+0.02,w:7.18,h:0.3,fontSize:8,color:'94A3B8',align:'center'});
+    }
+
+    // ── 出力 ──
+    const updStr=updDate.replace(/\//g,'-');
+    const fileName=`${mod.title}_${proc.name}_${updStr}.pptx`;
+    const blob=await pptx.write('blob');
+    const file=new File([blob],fileName,{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:fileName});
+    } else {
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=fileName; a.click();
+      URL.revokeObjectURL(url);
+    }
+    toast('PowerPoint出力完了');
+  }catch(e){
+    if(e.name!=='AbortError'){ console.error(e); toast('PowerPoint出力エラー：'+e.message); }
+  }
+}
+
+/* ============================================================
+   起動
+   ============================================================ */
+(async function init(){
+  try{
+    await openDB();
+    homeApps=await idbGet("meta","homeApps")||[];
+    showHome();
+  }catch(e){
+    const _el=$("docInfoLabel"); if(_el) _el.textContent="起動エラー："+(e.message||e);
+  }
+})();
+
+// サービスワーカー登録（オフライン対応）
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
+})();
+</script>
+</body>
+</html>
