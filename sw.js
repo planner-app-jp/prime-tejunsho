@@ -1,4 +1,4 @@
-const CACHE="prime-manual-v19";
+const CACHE="prime-manual-v20";
 // index.htmlはキャッシュしない（更新時に古いコードが残るのを防ぐ）
 const ASSETS=["./manifest.json","./icon.jpg"];
 
