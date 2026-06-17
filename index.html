@@ -1098,7 +1098,7 @@ function renderContent(){
   }
   // 業者メモ（工程単位）
   const mod2=getModuleConfig(currentModule);
-  if(!mod2||mod2.hasVendor) c.appendChild(renderVendor(p));
+  if(!mod2||mod2.hasVendor){ const vc=renderVendor(p); if(vc) c.appendChild(vc); }
 }
 
 /* ============================================================
@@ -1555,12 +1555,15 @@ function tapEdit(displayEl, makeEditor, getValue, setValue, onSave, opts){
 
 /* 業者メモ */
 function renderVendor(p){
-  const card=document.createElement("div"); card.className="vendor-card"+((p.vendorNotes||[]).length===0?" vendor-card-empty":"");
+  const notes=p.vendorNotes||[];
+  // 閲覧中でメモなし → 非表示
+  if(!editMode && notes.length===0) return null;
+  const card=document.createElement("div"); card.className="vendor-card";
   const head=document.createElement("div"); head.className="vendor-head";
   head.innerHTML=`<span class="ic">📌</span>業者別メモ・注意点`;
   card.appendChild(head);
   const list=document.createElement("div"); list.className="vendor-list";
-  (p.vendorNotes||[]).forEach(v=>{
+  notes.forEach(v=>{
     const it=document.createElement("div"); it.className="vendor-item";
     const nm=document.createElement("div"); nm.className="vendor-name";
     nm.innerHTML=`🏢 ${escapeHtml(v.vendor)}`;
@@ -1575,9 +1578,11 @@ function renderVendor(p){
     list.appendChild(it);
   });
   card.appendChild(list);
-  const add=document.createElement("button"); add.className="vendor-add"; add.textContent="＋ 業者メモを追加";
-  add.onclick=()=>openVendorSheet(p,null);
-  card.appendChild(add);
+  if(editMode){
+    const add=document.createElement("button"); add.className="vendor-add"; add.textContent="＋ 業者メモを追加";
+    add.onclick=()=>openVendorSheet(p,null);
+    card.appendChild(add);
+  }
   return card;
 }
 
