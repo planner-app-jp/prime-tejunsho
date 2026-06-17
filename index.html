@@ -1307,6 +1307,10 @@ function renderStep(st,i,sub){
       rep.className="mini-btn"; rep.textContent="差替";
       rep.onclick=()=>pickPhoto(st,sub);
       foot.appendChild(rep);
+      const crop=document.createElement("button");
+      crop.className="mini-btn"; crop.textContent="✂ トリミング";
+      crop.onclick=()=>cropPhoto(st,sub);
+      foot.appendChild(crop);
     }
   }
   if(editMode){
@@ -1424,6 +1428,8 @@ function renderSubStep(ss,j,stepIdx,st,sub,ssArea){
     if(ss.photoId){
       const rep=document.createElement('button'); rep.className='mini-btn'; rep.textContent='差替';
       rep.onclick=()=>pickPhoto(ss,sub); foot.appendChild(rep);
+      const crop=document.createElement('button'); crop.className='mini-btn'; crop.textContent='✂ トリミング';
+      crop.onclick=()=>cropPhoto(ss,sub); foot.appendChild(crop);
     }
   }
   if(editMode){
@@ -1684,19 +1690,26 @@ async function handlePhotoFile(file, saveOriginal){
   toast("画像を処理中…");
   try{
     const dataUrl=await compressImage(file,1400,0.72);
-    if(saveOriginal) saveOriginalToDevice(dataUrl); // トリミング前の原本を保存
-    openCropUI(dataUrl, async croppedUrl=>{
-      const {st,sub}=pendingPhotoTarget;
-      const pid=st.photoId||uid();
-      st.photoId=pid; st.annotations=st.annotations||[];
-      photoCache[pid]=croppedUrl;
-      await idbSet("photos",pid,croppedUrl);
-      touch(st); touch(sub); await saveData();
-      renderContent();
-      toast(saveOriginal?"写真を追加しました（原本を端末に保存）":"写真を追加しました");
-      pendingPhotoTarget=null;
-    });
+    if(saveOriginal) saveOriginalToDevice(dataUrl);
+    const {st,sub}=pendingPhotoTarget;
+    const pid=st.photoId||uid();
+    st.photoId=pid; st.annotations=st.annotations||[];
+    photoCache[pid]=dataUrl;
+    await idbSet("photos",pid,dataUrl);
+    touch(st); touch(sub); await saveData();
+    renderContent();
+    toast(saveOriginal?"写真を追加しました（原本を端末に保存）":"写真を追加しました");
+    pendingPhotoTarget=null;
   }catch(err){ toast("画像の読み込みに失敗しました"); pendingPhotoTarget=null; }
+}
+
+function cropPhoto(obj, sub){
+  const dataUrl=photoCache[obj.photoId]; if(!dataUrl) return;
+  openCropUI(dataUrl, async croppedUrl=>{
+    photoCache[obj.photoId]=croppedUrl;
+    await idbSet("photos",obj.photoId,croppedUrl);
+    touch(obj); touch(sub); await saveData(); renderContent(); toast("トリミングしました");
+  });
 }
 
 $("cameraInput").addEventListener("change",e=>handlePhotoFile(e.target.files[0], true));
