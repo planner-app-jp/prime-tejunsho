@@ -3414,14 +3414,8 @@ async function exportToPptx(proc,sub,mod){
     homeApps=await idbGet("meta","homeApps")||[];
     builtinOverrides=await idbGet("meta","builtinOverrides")||{};
     const storedBuiltins=await idbGet("meta","homeBuiltins");
-    if(storedBuiltins==null){
-      // 移行：tejunshoデータがあれば既存ユーザーとみなして表示
-      const tejData=await idbGet("meta","data");
-      homeBuiltins=tejData?["tejunsho"]:[];
-      await saveHomeBuiltins();
-    } else {
-      homeBuiltins=storedBuiltins;
-    }
+    homeBuiltins=storedBuiltins||[];
+    if(!storedBuiltins) await saveHomeBuiltins();
     showHome();
   }catch(e){
     const _el=$("docInfoLabel"); if(_el) _el.textContent="起動エラー："+(e.message||e);
