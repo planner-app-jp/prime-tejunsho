@@ -1432,6 +1432,10 @@ function renderStep(st,i,sub){
       rot.className="mini-btn"; rot.textContent="↻ 回転";
       rot.onclick=()=>rotatePhoto(st,sub);
       foot.appendChild(rot);
+      const delPhoto=document.createElement("button");
+      delPhoto.className="mini-btn del"; delPhoto.textContent="🗑 写真削除";
+      delPhoto.onclick=()=>removePhoto(st,sub);
+      foot.appendChild(delPhoto);
     }
   }
   if(editMode){
@@ -1553,6 +1557,8 @@ function renderSubStep(ss,j,stepIdx,st,sub,ssArea){
       crop.onclick=()=>cropPhoto(ss,sub); foot.appendChild(crop);
       const rot=document.createElement('button'); rot.className='mini-btn'; rot.textContent='↻ 回転';
       rot.onclick=()=>rotatePhoto(ss,sub); foot.appendChild(rot);
+      const delPhoto=document.createElement('button'); delPhoto.className='mini-btn del'; delPhoto.textContent='🗑 写真削除';
+      delPhoto.onclick=()=>removePhoto(ss,sub); foot.appendChild(delPhoto);
     }
   }
   if(editMode){
@@ -1891,6 +1897,15 @@ function rotatePhoto(obj, sub){
     touch(obj); touch(sub); saveData(); renderContent(); toast("回転しました");
   };
   img.src=dataUrl;
+}
+
+async function removePhoto(obj, sub){
+  if(!confirm("この写真を削除しますか？")) return;
+  pushUndo();
+  delete photoCache[obj.photoId];
+  await idbDel("photos", obj.photoId);
+  obj.photoId=null; obj.annotations=[];
+  touch(obj); touch(sub); await saveData(); renderContent(); toast("写真を削除しました");
 }
 
 $("cameraInput").addEventListener("change",e=>handlePhotoFile(e.target.files[0], true));
