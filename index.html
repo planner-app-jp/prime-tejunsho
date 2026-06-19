@@ -1970,7 +1970,7 @@ function updateAnnoColor(){
     d.classList.toggle('active', d.dataset.color===annoColor);
   });
   // パレットアイコンの色を更新
-  document.querySelectorAll('.anno-pal-btn svg [stroke]').forEach(el=>el.setAttribute('stroke',annoColor));
+  document.querySelectorAll('.anno-pal-btn svg').forEach(el=>el.setAttribute('stroke',annoColor));
   document.querySelectorAll('.anno-pal-icon-text').forEach(el=>el.style.color=annoColor);
 }
 document.querySelectorAll('.anno-color-dot').forEach(dot=>{
