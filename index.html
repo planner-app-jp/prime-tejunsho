@@ -1543,13 +1543,22 @@ function renderSubStep(ss,j,stepIdx,st,sub,ssArea){
   return wrap;
 }
 
+function getContainRect(img){
+  const cw=img.clientWidth, ch=img.clientHeight;
+  const nw=img.naturalWidth||cw, nh=img.naturalHeight||ch;
+  const scale=Math.min(cw/nw, ch/nh);
+  const rw=nw*scale, rh=nh*scale;
+  return {x:(cw-rw)/2, y:(ch-rh)/2, w:rw, h:rh};
+}
 function renderAnnotations(layer,annos,img){
-  if(!img.clientWidth){ requestAnimationFrame(()=>renderAnnotations(layer,annos,img)); return; }
+  if(!img.clientWidth||!img.naturalWidth){ requestAnimationFrame(()=>renderAnnotations(layer,annos,img)); return; }
   layer.innerHTML="";
+  const r=getContainRect(img);
+  layer.style.cssText=`position:absolute;left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;pointer-events:none;`;
   (annos||[]).forEach(a=>{
     const el=document.createElement("div");
     el.className="anno-mark "+a.type;
-    placeMark(el,a,img.clientWidth,img.clientHeight,false);
+    placeMark(el,a,r.w,r.h,false);
     layer.appendChild(el);
   });
 }
