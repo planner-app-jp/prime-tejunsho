@@ -3411,6 +3411,12 @@ async function exportToPptx(proc,sub,mod){
 (async function init(){
   try{
     await openDB();
+    // ?clean=1 で強制リセット（共有URL用）
+    if(new URLSearchParams(location.search).get("clean")==="1"){
+      await idbSet("meta","homeBuiltins",[]);
+      await idbSet("meta","data",null);
+      history.replaceState(null,"",location.pathname);
+    }
     homeApps=await idbGet("meta","homeApps")||[];
     builtinOverrides=await idbGet("meta","builtinOverrides")||{};
     const storedBuiltins=await idbGet("meta","homeBuiltins");
