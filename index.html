@@ -3419,9 +3419,15 @@ async function exportToPptx(proc,sub,mod){
     }
     homeApps=await idbGet("meta","homeApps")||[];
     builtinOverrides=await idbGet("meta","builtinOverrides")||{};
-    const storedBuiltins=await idbGet("meta","homeBuiltins");
-    homeBuiltins=storedBuiltins||[];
-    if(!storedBuiltins) await saveHomeBuiltins();
+    // v2: 旧移行データを強制リセット（意図せずprimeが表示される問題を防ぐ）
+    const builtinsVer=await idbGet("meta","homeBuiltinsVer");
+    if(builtinsVer!==2){
+      homeBuiltins=[];
+      await idbSet("meta","homeBuiltins",[]);
+      await idbSet("meta","homeBuiltinsVer",2);
+    } else {
+      homeBuiltins=await idbGet("meta","homeBuiltins")||[];
+    }
     showHome();
   }catch(e){
     const _el=$("docInfoLabel"); if(_el) _el.textContent="起動エラー："+(e.message||e);
