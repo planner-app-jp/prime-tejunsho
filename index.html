@@ -613,6 +613,7 @@
     <button class="head-btn" id="homeBtn" style="display:none;">← ホーム</button>
     <h1 id="appTitle">プライム手順書</h1>
     <button class="head-btn cancel-btn" id="cancelEditBtn" style="display:none;">✕ 戻る</button>
+    <button class="head-btn" id="undoBtn" style="display:none;" onclick="undoLast()">↩ 戻す</button>
     <button class="head-btn" id="editToggleBtn" style="display:none;">✏️ 編集</button>
     <button class="head-btn" id="menuBtn" style="display:none;">☰</button>
   </div>
@@ -945,6 +946,14 @@ const checkState={};    // checkState[subtabId][itemId] = true/false
 const collapseState={};  // collapseState[stepId] = true/false
 const procFlowCollapsed={}; // procFlowCollapsed[procId] = true/false
 let dataSnapshot=null;
+let undoStack=[];
+function pushUndo(){ undoStack.push(JSON.stringify(data)); if(undoStack.length>20) undoStack.shift(); updateUndoBtn(); }
+function updateUndoBtn(){ const b=$("undoBtn"); if(b) b.style.display=(editMode&&undoStack.length)?"":"none"; }
+async function undoLast(){
+  if(!undoStack.length) return;
+  data=JSON.parse(undoStack.pop()); updateUndoBtn();
+  await saveData(); renderAll(); toast("元に戻しました");
+}
 let _uidSeq=0;
 let uid=()=>"id"+Date.now().toString(36)+(++_uidSeq).toString(36);
 
@@ -1719,29 +1728,33 @@ function updateHeadSub(){
    手順CRUD
    ============================================================ */
 function addStep(sub){
+  pushUndo();
   sub.steps.push({id:uid(),title:"",text:"",photoId:null,annotations:[],subSteps:[],updatedAt:nowISO()});
   touch(sub); saveData(); renderContent();
-  // 末尾へスクロール
   setTimeout(()=>{ const c=$("content"); c.scrollTo({top:c.scrollHeight,behavior:"smooth"}); },50);
 }
 function delStep(sub,st){
   if(!confirm("この手順を削除しますか？")) return;
+  pushUndo();
   if(st.photoId){ idbDel("photos",st.photoId); delete photoCache[st.photoId]; }
   sub.steps=sub.steps.filter(x=>x.id!==st.id);
   touch(sub); saveData(); renderContent();
 }
 function moveStep(sub,i,dir){
   const j=i+dir; if(j<0||j>=sub.steps.length) return;
+  pushUndo();
   const t=sub.steps[i]; sub.steps[i]=sub.steps[j]; sub.steps[j]=t;
   touch(sub); saveData(); renderContent();
 }
 function addSubStep(st,sub){
+  pushUndo();
   if(!st.subSteps) st.subSteps=[];
   st.subSteps.push({id:uid(),title:'',text:'',photoId:null,annotations:[],updatedAt:nowISO()});
   touch(st); touch(sub); saveData(); renderContent();
 }
 function delSubStep(st,ss,sub){
   if(!confirm('このサブ手順を削除しますか？')) return;
+  pushUndo();
   if(ss.photoId){ idbDel('photos',ss.photoId); delete photoCache[ss.photoId]; }
   st.subSteps=st.subSteps.filter(x=>x.id!==ss.id);
   touch(st); touch(sub); saveData(); renderContent();
@@ -2259,8 +2272,9 @@ $("procSaveBtn").onclick=async ()=>{
   const name=$("procNameInput").value.trim();
   if(!name){ toast(`${getModuleConfig(currentModule)?.saveErrLabel||"工程名"}を入力してください`); return; }
   const flow=$("procFlowInput").value.trim();
-  if(procEditTarget){ procEditTarget.name=name; procEditTarget.type=procPickType; procEditTarget.flow=flow; touch(procEditTarget); }
+  if(procEditTarget){ pushUndo(); procEditTarget.name=name; procEditTarget.type=procPickType; procEditTarget.flow=flow; touch(procEditTarget); }
   else{
+    pushUndo();
     const np={id:uid(),name,type:procPickType,flow,updatedAt:nowISO(),vendorNotes:[],
       subtabs:[{id:uid(),name:"手順",updatedAt:nowISO(),steps:[]}]};
     data.processes.push(np); data.activeProcess=np.id; data.activeSubtab=np.subtabs[0].id;
@@ -2271,7 +2285,7 @@ $("procDelBtn").onclick=async ()=>{
   if(!procEditTarget) return;
   const lbl=getModuleConfig(currentModule)?.tabLabel||"工程";
   if(!confirm(`${lbl}「${procEditTarget.name}」を中の手順ごと削除しますか？`)) return;
-  // 写真も削除
+  pushUndo();
   procEditTarget.subtabs.forEach(s=>s.steps.forEach(st=>{ if(st.photoId){ idbDel("photos",st.photoId); delete photoCache[st.photoId]; } }));
   data.processes=data.processes.filter(p=>p.id!==procEditTarget.id);
   if(data.activeProcess===procEditTarget.id){
@@ -2296,8 +2310,9 @@ $("subSaveBtn").onclick=async ()=>{
   const name=$("subNameInput").value.trim();
   if(!name){ toast("タブ名を入力してください"); return; }
   const p=curProcess();
-  if(subEditTarget){ subEditTarget.name=name; touch(subEditTarget); }
+  if(subEditTarget){ pushUndo(); subEditTarget.name=name; touch(subEditTarget); }
   else{
+    pushUndo();
     const ns={id:uid(),name,updatedAt:nowISO(),steps:[]};
     p.subtabs.push(ns); data.activeSubtab=ns.id; touch(p);
   }
@@ -2308,6 +2323,7 @@ $("subDelBtn").onclick=async ()=>{
   const p=curProcess();
   if(p.subtabs.length<=1){ toast("最後の1つは削除できません"); return; }
   if(!confirm(`サブタブ「${subEditTarget.name}」を削除しますか？`)) return;
+  pushUndo();
   subEditTarget.steps.forEach(st=>{ if(st.photoId){ idbDel("photos",st.photoId); delete photoCache[st.photoId]; } });
   p.subtabs=p.subtabs.filter(s=>s.id!==subEditTarget.id);
   if(data.activeSubtab===subEditTarget.id) data.activeSubtab=p.subtabs[0].id;
@@ -2568,18 +2584,22 @@ $("tabbar").addEventListener("click",e=>{
 $("editToggleBtn").onclick=async()=>{
   if(!editMode){
     dataSnapshot=JSON.parse(JSON.stringify(data));
+    undoStack=[];
     editMode=true;
     $("editToggleBtn").textContent="✔ 保存";
     $("editToggleBtn").classList.add("edit-active");
     $("cancelEditBtn").style.display="";
     $("menuBtn").style.display="none";
+    updateUndoBtn();
   } else {
     dataSnapshot=null;
+    undoStack=[];
     editMode=false;
     $("editToggleBtn").textContent="✏️ 編集";
     $("editToggleBtn").classList.remove("edit-active");
     $("cancelEditBtn").style.display="none";
     $("menuBtn").style.display="";
+    updateUndoBtn();
     await saveData();
   }
   renderAll();
