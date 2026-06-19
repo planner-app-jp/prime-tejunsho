@@ -339,8 +339,7 @@
   .anno-mark.circle{border:3px solid #ff2222;border-radius:50%;background:transparent;}
   .anno-mark.rect{border:3px solid #ff2222;background:transparent;border-radius:2px;box-sizing:border-box;}
   .anno-mark.num{
-    background:#ff2222;color:#fff;border-radius:50%;font-weight:800;border:2px solid #fff;
-    box-shadow:0 0 0 1px #ff2222;
+    background:#ff2222;color:#fff;border-radius:50%;font-weight:800;
   }
   .anno-mark.text{color:#ff2222;font-weight:800;text-shadow:0 0 3px #fff,0 0 3px #fff,0 1px 2px rgba(0,0,0,.3);white-space:nowrap;}
   .anno-mark.arrow{color:#ff2222;font-weight:900;text-shadow:0 0 3px #fff;}
@@ -2027,7 +2026,7 @@ function placeMark(el,a,iw,ih,interactive){
   } else if(a.type==="num"){
     el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
     el.style.fontSize=(sizePx*0.55)+"px"; el.textContent=a.text||"";
-    el.style.background=c; el.style.boxShadow=`0 0 0 1px ${c}`;
+    el.style.background=c;
   } else if(a.type==="text"){
     el.style.fontSize=sizePx+"px"; el.textContent=a.text||"";
     el.style.color=c;
