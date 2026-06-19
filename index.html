@@ -957,7 +957,7 @@ const procFlowCollapsed={}; // procFlowCollapsed[procId] = true/false
 let dataSnapshot=null;
 let undoStack=[];
 function pushUndo(){ undoStack.push(JSON.stringify(data)); if(undoStack.length>5) undoStack.shift(); updateUndoBtn(); }
-function updateUndoBtn(){ const b=$("undoBtn"); if(b) b.style.display=(editMode&&undoStack.length)?"":"none"; }
+function updateUndoBtn(){ const b=$("undoBtn"); if(b) b.style.display=undoStack.length?"":"none"; }
 async function undoLast(){
   if(!undoStack.length) return;
   data=JSON.parse(undoStack.pop()); updateUndoBtn();
