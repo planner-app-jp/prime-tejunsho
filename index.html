@@ -947,7 +947,7 @@ const collapseState={};  // collapseState[stepId] = true/false
 const procFlowCollapsed={}; // procFlowCollapsed[procId] = true/false
 let dataSnapshot=null;
 let undoStack=[];
-function pushUndo(){ undoStack.push(JSON.stringify(data)); if(undoStack.length>20) undoStack.shift(); updateUndoBtn(); }
+function pushUndo(){ undoStack.push(JSON.stringify(data)); if(undoStack.length>5) undoStack.shift(); updateUndoBtn(); }
 function updateUndoBtn(){ const b=$("undoBtn"); if(b) b.style.display=(editMode&&undoStack.length)?"":"none"; }
 async function undoLast(){
   if(!undoStack.length) return;
