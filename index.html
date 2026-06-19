@@ -195,6 +195,9 @@
     display:flex;align-items:center;gap:8px;padding:9px 13px;border-top:1px solid var(--line);
     background:#fafbfc;
   }
+  .photo-action-row{
+    display:flex;flex-wrap:wrap;gap:6px;padding:8px 13px;border-top:1px solid var(--line);background:#fafbfc;
+  }
   .step-date{font-size:11px;color:var(--muted);flex:1;}
   .step-chevron{font-size:13px;color:var(--accent);flex-shrink:0;padding:2px 6px 2px 4px;transition:transform .18s ease;font-weight:700;}
   .step-collapsed .step-chevron{transform:rotate(-90deg);}
@@ -1339,9 +1342,17 @@ function renderStep(st,i,sub){
       const layer=document.createElement("div"); layer.className="anno-layer";
       img.onload=()=>renderAnnotations(layer,st.annotations,img);
       if(img.complete) renderAnnotations(layer,st.annotations,img);
-      pw.appendChild(layer);
       pw.onclick=()=>openAnnoEditor(st,sub);
       wrap.appendChild(pw);
+      // 写真操作ボタン（写真直下）
+      const prow=document.createElement("div"); prow.className="photo-action-row";
+      [["🖊 写真編集",()=>openAnnoEditor(st,sub),"photo"],
+       ["差替",()=>pickPhoto(st,sub),""],
+       ["✂ トリミング",()=>cropPhoto(st,sub),""],
+       ["↻ 回転",()=>rotatePhoto(st,sub),""],
+       ["🗑 写真削除",()=>removePhoto(st,sub),"del"]
+      ].forEach(([lbl,fn,cls])=>{ const b=document.createElement("button"); b.className="mini-btn"+(cls?" "+cls:""); b.textContent=lbl; b.onclick=fn; prow.appendChild(b); });
+      wrap.appendChild(prow);
     } else {
       const e=document.createElement("div"); e.className="step-photo-empty";
       e.textContent="📷 写真";
@@ -1414,28 +1425,12 @@ function renderStep(st,i,sub){
   const foot=document.createElement("div"); foot.className="step-foot";
   foot.innerHTML=`<span class="step-date"></span>`;
   if(editMode){
-    const photoBtn=document.createElement("button");
-    photoBtn.className="mini-btn photo";
-    photoBtn.innerHTML=st.photoId?"🖊 写真編集":"📷 写真";
-    photoBtn.onclick=()=>st.photoId?openAnnoEditor(st,sub):pickPhoto(st,sub);
-    foot.appendChild(photoBtn);
-    if(st.photoId){
-      const rep=document.createElement("button");
-      rep.className="mini-btn"; rep.textContent="差替";
-      rep.onclick=()=>pickPhoto(st,sub);
-      foot.appendChild(rep);
-      const crop=document.createElement("button");
-      crop.className="mini-btn"; crop.textContent="✂ トリミング";
-      crop.onclick=()=>cropPhoto(st,sub);
-      foot.appendChild(crop);
-      const rot=document.createElement("button");
-      rot.className="mini-btn"; rot.textContent="↻ 回転";
-      rot.onclick=()=>rotatePhoto(st,sub);
-      foot.appendChild(rot);
-      const delPhoto=document.createElement("button");
-      delPhoto.className="mini-btn del"; delPhoto.textContent="🗑 写真削除";
-      delPhoto.onclick=()=>removePhoto(st,sub);
-      foot.appendChild(delPhoto);
+    if(!st.photoId){
+      const photoBtn=document.createElement("button");
+      photoBtn.className="mini-btn photo";
+      photoBtn.innerHTML="📷 写真";
+      photoBtn.onclick=()=>directCamera(st,sub);
+      foot.appendChild(photoBtn);
     }
   }
   if(editMode){
