@@ -619,6 +619,9 @@
 <!-- 工程タブ -->
 <div class="tabbar" id="tabbar"></div>
 
+<!-- 印刷ヘッダー（通常時非表示） -->
+<div id="printDateBar" style="display:none;"></div>
+
 <!-- 工程ヘッダー -->
 <div class="process-head" id="processHead" style="display:none;">
   <div class="process-title-row" id="procTitleRow"></div>
@@ -627,7 +630,6 @@
 </div>
 
 <!-- コンテンツ -->
-<div id="printDateBar" style="display:none;"></div>
 <div class="content" id="content"></div>
 
 <!-- 各種隠しfile input -->
@@ -2974,7 +2976,7 @@ $("miPrint").onclick=()=>{
   const inputDate=prompt("更新日を入力してください（変更可）",defaultDate);
   if(inputDate===null) return;
   const appName=$("appTitle").textContent||"プライム手順書";
-  $("printDateBar").innerHTML=`<span class="ph-title">${escapeHtml(appName)}　${escapeHtml(p.name)}</span><span class="ph-date">更新日：${escapeHtml(inputDate||defaultDate)}</span>`;
+  $("printDateBar").innerHTML=`<span class="ph-title">${escapeHtml(appName)}</span><span class="ph-date">更新日：${escapeHtml(inputDate||defaultDate)}</span>`;
   const origSubtab=data.activeSubtab;
   const container=$("content");
   const subtabs=p.subtabs||[];
