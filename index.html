@@ -1447,7 +1447,7 @@ function renderStep(st,i,sub){
     down.onclick=()=>moveStep(sub,i,1);
     foot.appendChild(up); foot.appendChild(down);
     const del=document.createElement("button");
-    del.className="mini-btn del"; del.textContent="削除";
+    del.className="mini-btn del"; del.textContent="手順削除";
     del.onclick=()=>delStep(sub,st);
     foot.appendChild(del);
   }
@@ -1562,7 +1562,7 @@ function renderSubStep(ss,j,stepIdx,st,sub,ssArea){
     }
   }
   if(editMode){
-    const del=document.createElement('button'); del.className='mini-btn del'; del.textContent='削除';
+    const del=document.createElement('button'); del.className='mini-btn del'; del.textContent='手順削除';
     del.onclick=()=>delSubStep(st,ss,sub); foot.appendChild(del);
   }
   wrap.appendChild(foot);
