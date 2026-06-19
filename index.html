@@ -1327,7 +1327,7 @@ function renderStep(st,i,sub){
     } else {
       const e=document.createElement("div"); e.className="step-photo-empty";
       e.textContent="📷 写真を追加（タップ）";
-      e.onclick=()=>pickPhoto(st,sub);
+      e.onclick=()=>directCamera(st,sub);
       wrap.appendChild(e);
     }
     const body=document.createElement("div"); body.className="step-body";
@@ -1754,6 +1754,10 @@ let pendingPhotoTarget=null;
 function pickPhoto(st,sub){
   pendingPhotoTarget={st,sub};
   showSheet("photoSourceSheet");
+}
+function directCamera(st,sub){
+  pendingPhotoTarget={st,sub};
+  openInAppCamera();
 }
 /* ===== アプリ内カメラ（シャッター音なし） ===== */
 let _camStream=null;
