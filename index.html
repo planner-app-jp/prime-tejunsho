@@ -74,6 +74,8 @@
   .ptab.type-yellow{border-color:var(--yellow-line);color:var(--yellow);background:var(--yellow-soft);}
   .ptab.active{box-shadow:0 0 0 2px currentColor inset;}
   .ptab.active.type-normal{background:#fff;}
+  .ptab.done{border-color:#16a34a!important;color:#16a34a!important;background:#f0fdf4!important;}
+  .ptab.done.active{box-shadow:0 0 0 2px #16a34a inset!important;}
   .ptab-add{
     flex:0 0 auto;border:1.5px dashed var(--accent);background:var(--accent-soft);color:var(--accent);
     border-radius:999px;padding:8px 13px;font-size:14px;font-weight:700;white-space:nowrap;
@@ -1031,7 +1033,12 @@ function renderTabs(){
   bar.innerHTML="";
   data.processes.forEach((p,i)=>{
     const b=document.createElement("button");
-    b.className=`ptab type-${p.type}`+(p.id===data.activeProcess?" active":"");
+    const isProcDone=!editMode&&p.subtabs&&p.subtabs.length>0&&p.subtabs.every(s=>{
+      if(!s.steps||!s.steps.length) return false;
+      const cs=checkState[s.id]||{};
+      return s.steps.every(st=>cs[st.id]);
+    });
+    b.className=`ptab type-${p.type}`+(p.id===data.activeProcess?" active":"")+(isProcDone?" done":"");
     b.innerHTML=`<span class="pnum">${i+1}</span>${escapeHtml(p.name)}`;
     b.dataset.pid=p.id;
     bar.appendChild(b);
@@ -1805,6 +1812,15 @@ function updateSubtabDoneState(sub){
   const done=sub.steps&&sub.steps.length>0&&sub.steps.every(st=>cs[st.id]);
   const btn=document.querySelector(`.stab[data-sid="${sub.id}"]`);
   if(btn) btn.classList.toggle('done',!!done);
+  // 工程タブも更新
+  const p=curProcess(); if(!p) return;
+  const procDone=p.subtabs&&p.subtabs.length>0&&p.subtabs.every(s=>{
+    if(!s.steps||!s.steps.length) return false;
+    const cs2=checkState[s.id]||{};
+    return s.steps.every(st=>cs2[st.id]);
+  });
+  const ptabBtn=document.querySelector(`[data-pid="${p.id}"]`);
+  if(ptabBtn) ptabBtn.classList.toggle('done',!!procDone);
 }
 
 function rotatePhoto(obj, sub){
