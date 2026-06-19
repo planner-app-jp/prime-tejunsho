@@ -389,6 +389,19 @@
     position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);
     font-size:10px;color:#8e8e93;white-space:nowrap;font-weight:500;
   }
+  /* カラーピッカー */
+  .anno-color-row{
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    padding:10px 16px 8px;
+    background:rgba(28,28,30,.98);border-top:1px solid #3a3a3c;flex-shrink:0;
+  }
+  .anno-color-dot{
+    width:30px;height:30px;border-radius:50%;border:3px solid transparent;
+    cursor:pointer;transition:border-color .15s, transform .1s;flex-shrink:0;
+  }
+  .anno-color-dot:active{transform:scale(.88);}
+  .anno-color-dot.active{border-color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.5);}
+  .anno-color-label{font-size:11px;color:#8e8e93;}
 
   .toast{
     position:fixed;bottom:calc(env(safe-area-inset-bottom) + 20px);left:50%;transform:translateX(-50%);
@@ -781,6 +794,14 @@
     <div class="anno-ctx-sep"></div>
     <button class="anno-ctx-btn del" id="atDelete">削除</button>
   </div>
+  <!-- カラーピッカー -->
+  <div class="anno-color-row" id="annoColorRow">
+    <span class="anno-color-label">色：</span>
+    <button class="anno-color-dot active" id="colorRed" data-color="#ff3b30" style="background:#ff3b30;"></button>
+    <button class="anno-color-dot" id="colorBlack" data-color="#1c1c1e" style="background:#1c1c1e;border-color:transparent;"></button>
+    <button class="anno-color-dot" id="colorBlue" data-color="#0a84ff" style="background:#0a84ff;"></button>
+    <button class="anno-color-dot" id="colorYellow" data-color="#ffd60a" style="background:#ffd60a;"></button>
+  </div>
   <!-- ツールパレット -->
   <div class="anno-palette">
     <button class="anno-pal-btn" id="atCircle">
@@ -788,15 +809,15 @@
       <span class="anno-pal-label">赤丸</span>
     </button>
     <button class="anno-pal-btn" id="atNum">
-      <span style="font-size:22px;font-weight:800;color:#ff3b30;line-height:1">①</span>
+      <span class="anno-pal-icon-text" style="font-size:22px;font-weight:800;color:#ff3b30;line-height:1">①</span>
       <span class="anno-pal-label">番号</span>
     </button>
     <button class="anno-pal-btn" id="atText">
-      <span style="font-size:24px;font-weight:800;color:#ff3b30;font-style:italic;line-height:1">A</span>
+      <span class="anno-pal-icon-text" style="font-size:24px;font-weight:800;color:#ff3b30;font-style:italic;line-height:1">A</span>
       <span class="anno-pal-label">文字</span>
     </button>
     <button class="anno-pal-btn" id="atArrow">
-      <span style="font-size:24px;color:#ff3b30;line-height:1">➜</span>
+      <span class="anno-pal-icon-text" style="font-size:24px;color:#ff3b30;line-height:1">➜</span>
       <span class="anno-pal-label">矢印</span>
     </button>
     <button class="anno-pal-btn" id="atRect">
@@ -1958,8 +1979,9 @@ let annoState=null; // {st, sub, annos:[...], selected:index}
 function openAnnoEditor(st,sub){
   if(!st.photoId||!photoCache[st.photoId]){ pickPhoto(st,sub); return; }
   annoState={ st, sub, annos:JSON.parse(JSON.stringify(st.annotations||[])), selected:-1 };
-  annoActiveTool=null;
+  annoActiveTool=null; annoColor='#ff3b30';
   $("annoCtxBar").classList.remove("visible");
+  updateAnnoColor();
   $("annoImg").src=photoCache[st.photoId];
   $("annoEditor").classList.remove("hidden");
   $("annoImg").onload=drawAnnoMarks;
@@ -1970,6 +1992,26 @@ function closeAnnoEditor(){
   annoState=null; annoActiveTool=null;
 }
 let annoActiveTool=null;
+let annoColor='#ff3b30';
+function updateAnnoColor(){
+  document.querySelectorAll('.anno-color-dot').forEach(d=>{
+    d.classList.toggle('active', d.dataset.color===annoColor);
+  });
+  // パレットアイコンの色を更新
+  document.querySelectorAll('.anno-pal-btn svg [stroke]').forEach(el=>el.setAttribute('stroke',annoColor));
+  document.querySelectorAll('.anno-pal-icon-text').forEach(el=>el.style.color=annoColor);
+}
+document.querySelectorAll('.anno-color-dot').forEach(dot=>{
+  dot.onclick=()=>{
+    annoColor=dot.dataset.color;
+    // 選択中マークの色も変更
+    if(annoState&&annoState.selected>=0){
+      annoState.annos[annoState.selected].color=annoColor;
+      drawAnnoMarks();
+    }
+    updateAnnoColor();
+  };
+});
 function updateAnnoPalette(){
   ["atCircle","atNum","atText","atArrow","atRect"].forEach(id=>{
     const typeMap={atCircle:"circle",atNum:"num",atText:"text",atArrow:"arrow",atRect:"rect"};
@@ -2003,28 +2045,34 @@ function drawAnnoMarks(){
 // マークのスタイル・位置決め（編集/表示共通）
 function placeMark(el,a,iw,ih,interactive){
   const base=Math.min(iw,ih);
+  const c=a.color||'#ff3b30';
   el.style.left=a.x+"%"; el.style.top=a.y+"%";
   const sizePx=Math.max(14,(a.size/100)*base);
   if(a.type==="circle"){
     el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
     el.style.borderWidth=Math.max(2,base*0.006)+"px";
+    el.style.borderColor=c;
   } else if(a.type==="num"){
     el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
     el.style.fontSize=(sizePx*0.55)+"px"; el.textContent=a.text||"";
+    el.style.background=c; el.style.boxShadow=`0 0 0 1px ${c}`;
   } else if(a.type==="text"){
     el.style.fontSize=sizePx+"px"; el.textContent=a.text||"";
+    el.style.color=c;
   } else if(a.type==="arrow"){
     el.style.fontSize=(sizePx*1.4)+"px"; el.textContent="➜";
+    el.style.color=c;
   } else if(a.type==="rect"){
     const wPx=Math.max(20,(a.size/100)*iw);
     const hPx=Math.max(10,wPx*0.6*(a.hRatio||1));
     el.style.width=wPx+"px"; el.style.height=hPx+"px";
     el.style.borderWidth=Math.max(2,base*0.005)+"px";
+    el.style.borderColor=c;
   }
 }
 // 追加
 function addAnno(type){
-  const base={x:50,y:50,size:14};
+  const base={x:50,y:50,size:14,color:annoColor};
   if(type==="circle") annoState.annos.push({...base,type:"circle",size:18});
   else if(type==="num"){
     const n=annoState.annos.filter(a=>a.type==="num").length+1;
@@ -2032,7 +2080,7 @@ function addAnno(type){
     if(t==null) return;
     annoState.annos.push({...base,type:"num",size:10,text:t});
   } else if(type==="text"){
-    const t=prompt("表示する赤文字を入力","注意");
+    const t=prompt("表示する文字を入力","注意");
     if(t==null) return;
     annoState.annos.push({...base,type:"text",size:7,text:t});
   } else if(type==="arrow"){
