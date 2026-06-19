@@ -864,7 +864,10 @@ let builtinOverrides = {}; // {key: {title, icon}} - ビルトインタイルの
 
 function getModuleConfig(key){
   if(!key) return null;
-  if(MODULES[key]) return MODULES[key];
+  if(MODULES[key]){
+    const ov=builtinOverrides[key];
+    return ov?{...MODULES[key],title:ov.title,icon:ov.icon}:MODULES[key];
+  }
   const app=homeApps.find(a=>a.key===key);
   if(app) return { ...MODULES.tejunsho, title:app.title, dataKey:`cust_${key}`, hasVendor:false, hasSubtabs:false, hasExcel:true, isCustom:true };
   return null;
