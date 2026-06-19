@@ -307,12 +307,16 @@
   }
   .btn-danger{color:var(--danger);border:1.5px solid #f3c0c0;background:#fff5f5;border-radius:11px;padding:13px 18px;font-size:15px;font-weight:700;}
   .menu-item{
-    display:flex;align-items:center;gap:12px;padding:15px 16px;font-size:15px;font-weight:600;
+    display:flex;align-items:center;gap:12px;padding:13px 16px;font-size:15px;font-weight:600;
     border-bottom:1px solid var(--line);background:none;border:none;width:100%;text-align:left;color:var(--ink);
   }
-  .menu-item .ic{font-size:19px;width:24px;text-align:center;}
+  .menu-item .ic{font-size:19px;width:24px;text-align:center;flex-shrink:0;}
   .menu-item:active{background:var(--bg);}
   .menu-item.danger{color:var(--danger);}
+  .menu-section-lbl{
+    font-size:11px;font-weight:700;color:#64748b;letter-spacing:.6px;text-transform:uppercase;
+    padding:10px 16px 5px;background:#f1f5f9;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  }
   .menu-note{font-size:11px;color:var(--muted);padding:10px 16px;line-height:1.6;}
 
   /* ===== 注釈エディタ ===== */
@@ -658,14 +662,17 @@
   <div class="sheet">
     <div class="sheet-grip"></div>
     <div class="sheet-head"><h3>メニュー</h3><button class="close" data-close>×</button></div>
-    <button class="menu-item" id="miExport"><span class="ic">📤</span><span>データを書き出す<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">今開いているアプリの全工程をJSONで保存。メンバーへの共有・バックアップに使う</span></span></button>
-    <button class="menu-item" id="miImport"><span class="ic">📥</span><span>データを読み込む（全置き換え）<span style="display:block;font-size:11px;color:#e57373;font-weight:400;margin-top:2px;">⚠ 今のデータがすべて消えます。機種変更・バックアップ復元用</span></span></button>
-    <button class="menu-item" id="miMerge"><span class="ic">➕</span><span>工程を追加する（既存を残す）<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">受け取ったJSONの工程を追加。自分のデータは消えない。共有された手順書の受け取りに使う</span></span></button>
-    <button class="menu-item" id="miPrint" style="display:none;"><span class="ic">🖨️</span>印刷する／レイアウト確認</button>
-    <button class="menu-item" id="miPptxExport" style="display:none;"><span class="ic">📑</span>PowerPointに出力する</button>
-    <button class="menu-item" id="miPptxShare" style="display:none;"><span class="ic">📧</span>PowerPointをメール・LINEで共有</button>
-    <button class="menu-item" id="miExcelExport" style="display:none;"><span class="ic">📊</span>Excelに出力する<span style="display:block;font-size:10px;color:#94a3b8;font-weight:400;">※写真のスタンプは反映されません</span></button>
-    <button class="menu-item" id="miExcelShare" style="display:none;"><span class="ic">📧</span>Excelをメール・LINEで共有<span style="display:block;font-size:10px;color:#94a3b8;font-weight:400;">※写真のスタンプは反映されません</span></button>
+    <button class="menu-item" id="miPrint" style="display:none;"><span class="ic">🖨️</span><span>印刷する／レイアウト確認<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">手順書を印刷、またはレイアウトを事前確認できます</span></span></button>
+    <button class="menu-item" id="miExport"><span class="ic">💾</span><span>データを保存する<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">全工程をJSONで書き出し。バックアップや機種変更のときに使う</span></span></button>
+    <div class="menu-section-lbl">インポート</div>
+    <button class="menu-item" id="miMerge"><span class="ic">➕</span><span>工程を追加する<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">受け取ったJSONを追加。今のデータはそのまま残る</span></span></button>
+    <button class="menu-item" id="miImport"><span class="ic">🔄</span><span>全て置き換え<span style="display:block;font-size:11px;color:#e57373;font-weight:400;margin-top:2px;">⚠ 今のデータがすべて消えます。機種変更・復元用</span></span></button>
+    <div class="menu-section-lbl" id="miPcEditHeader" style="display:none;">PCで編集</div>
+    <button class="menu-item" id="miExcelExport" style="display:none;"><span class="ic">📊</span><span>Excelに出力する<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">PC用のExcelファイルを端末に保存。写真スタンプは反映されません</span></span></button>
+    <button class="menu-item" id="miPptxExport" style="display:none;"><span class="ic">📑</span><span>PowerPointに出力する<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">スライド形式でファイルを保存。写真・スタンプも含まれます</span></span></button>
+    <div class="menu-section-lbl" id="miPcShareHeader" style="display:none;">PCに共有</div>
+    <button class="menu-item" id="miExcelShare" style="display:none;"><span class="ic">📧</span><span>ExcelをGmailで共有<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">Excelファイルを添付してGmailなどで送信。写真スタンプは反映されません</span></span></button>
+    <button class="menu-item" id="miPptxShare" style="display:none;"><span class="ic">📧</span><span>PowerPointをGmailで共有<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">PowerPointファイルを添付してGmailなどで送信</span></span></button>
     <div class="menu-note">
       写真と手順はこの端末内（ブラウザ）に保存されます。機種変更やPCと共有するときは「書き出す」でJSONを保存し、別端末で「読み込む」と移せます。<br>
       ホーム画面に追加するとアプリのように起動できます。<br>
@@ -2849,10 +2856,12 @@ async function openModule(key){
   $("editToggleBtn").style.display="";
   $("menuBtn").style.display="";
   $("appTitle").textContent=mod.title;
-  $("miExcelExport").style.display=mod.hasExcel?"":"none";
-  $("miExcelShare").style.display=(mod.hasExcel&&!!navigator.share)?"":"none";
   $("miPrint").style.display=mod.hasExcel?"":"none";
+  $("miPcEditHeader").style.display=mod.hasExcel?"":"none";
+  $("miExcelExport").style.display=mod.hasExcel?"":"none";
   $("miPptxExport").style.display=mod.hasExcel?"":"none";
+  $("miPcShareHeader").style.display=(mod.hasExcel&&!!navigator.share)?"":"none";
+  $("miExcelShare").style.display=(mod.hasExcel&&!!navigator.share)?"":"none";
   $("miPptxShare").style.display=(mod.hasExcel&&!!navigator.share)?"":"none";
   const app=homeApps.find(a=>a.key===key);
   const seeds={tejunsho:seedData, manual:seedDataManual};
