@@ -552,7 +552,7 @@
     .step-text-view { font-size:13px!important; }
 
     /* サブ手順 */
-    .substep { break-inside:avoid; }
+    .substep { break-inside:avoid; border-left:none!important; }
     .substep-body { padding:4px 12px 8px!important; }
 
     /* ベンダーカード */
@@ -2969,7 +2969,7 @@ $("miPrint").onclick=()=>{
   const inputDate=prompt("更新日を入力してください（変更可）",defaultDate);
   if(inputDate===null) return;
   const appName=$("appTitle").textContent||"プライム手順書";
-  $("printDateBar").innerHTML=`<span class="ph-title">${escapeHtml(appName)}</span><span class="ph-date">更新日：${escapeHtml(inputDate||defaultDate)}</span>`;
+  $("printDateBar").innerHTML=`<span class="ph-title">${escapeHtml(appName)}　${escapeHtml(p.name)}</span><span class="ph-date">更新日：${escapeHtml(inputDate||defaultDate)}</span>`;
   const origSubtab=data.activeSubtab;
   const container=$("content");
   const subtabs=p.subtabs||[];
