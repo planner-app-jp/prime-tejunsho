@@ -599,6 +599,7 @@
 <input type="file" id="photoInput" accept="image/*">
 <input type="file" id="cameraInput" accept="image/*" capture="environment">
 <input type="file" id="importInput" accept="application/json,.json">
+<input type="file" id="mergeInput" accept="application/json,.json">
 <canvas id="cameraCanvas" style="display:none;"></canvas>
 
 <!-- アプリ内カメラ（シャッター音なし） -->
@@ -630,7 +631,8 @@
     <div class="sheet-grip"></div>
     <div class="sheet-head"><h3>メニュー</h3><button class="close" data-close>×</button></div>
     <button class="menu-item" id="miExport"><span class="ic">📤</span>データを書き出す（バックアップ／PC用）</button>
-    <button class="menu-item" id="miImport"><span class="ic">📥</span>データを読み込む（インポート）</button>
+    <button class="menu-item" id="miImport"><span class="ic">📥</span>データを読み込む（全置き換え）</button>
+    <button class="menu-item" id="miMerge"><span class="ic">➕</span>工程を追加する（既存を残す）</button>
     <button class="menu-item" id="miPrint" style="display:none;"><span class="ic">🖨️</span>印刷する／レイアウト確認</button>
     <button class="menu-item" id="miPptxExport" style="display:none;"><span class="ic">📑</span>PowerPointに出力する</button>
     <button class="menu-item" id="miPptxShare" style="display:none;"><span class="ic">📧</span>PowerPointをメール・LINEで共有</button>
@@ -2585,6 +2587,35 @@ $("importInput").addEventListener("change",async e=>{
     toast("読み込みました");
   }catch(err){ toast("読み込みに失敗：形式をご確認ください"); }
 });
+$("miMerge").onclick=()=>{ hideSheets(); $("mergeInput").value=""; $("mergeInput").click(); };
+$("mergeInput").addEventListener("change",async e=>{
+  const file=e.target.files[0]; if(!file) return;
+  try{
+    const txt=await file.text();
+    const bundle=JSON.parse(txt);
+    if(!bundle.data||!bundle.data.processes) throw new Error("形式が違います");
+    const incoming=bundle.data.processes||[];
+    if(!incoming.length){ toast("追加できる工程がありません"); return; }
+    const names=incoming.map(p=>p.name||"(無題)").join("、");
+    if(!confirm(`以下の工程を追加します（既存のデータは残ります）\n\n${names}\n\nよろしいですか？`)) return;
+    // 写真は既存を残しつつ追加
+    const photos=bundle.photos||{};
+    for(const k in photos){ await idbSet("photos",k,photos[k]); photoCache[k]=photos[k]; }
+    // 工程を追加（IDが重複している場合は新IDを付与）
+    const existingIds=new Set(data.processes.map(p=>p.id));
+    incoming.forEach(p=>{
+      if(existingIds.has(p.id)){
+        // 同じIDが既に存在→新IDに付け替え（工程レベルのみ。subtab/stepはそのまま）
+        p.id=uid();
+      }
+      data.processes.push(p);
+    });
+    await saveData();
+    renderAll();
+    toast(`${incoming.length}件の工程を追加しました`);
+  }catch(err){ toast("読み込みに失敗：形式をご確認ください"); }
+});
+
 function clearStore(store){
   return new Promise((res,rej)=>{
     const t=db.transaction(store,"readwrite").objectStore(store).clear();
