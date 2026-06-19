@@ -2911,9 +2911,11 @@ $("addAppSaveBtn").onclick=async()=>{
   if(addAppBuiltinKey){
     builtinOverrides[addAppBuiltinKey]={title:name,icon:addAppSelectedIcon};
     await idbSet("meta","builtinOverrides",builtinOverrides);
+    if(currentModule===addAppBuiltinKey) $("appTitle").textContent=name;
     hideSheets(); renderHome(); toast(`「${name}」を更新しました`);
   } else if(addAppEditTarget){
     addAppEditTarget.title=name; addAppEditTarget.icon=addAppSelectedIcon;
+    if(currentModule===addAppEditTarget.key) $("appTitle").textContent=name;
     await saveHomeApps(); hideSheets(); renderHome(); toast(`「${name}」を更新しました`);
   } else {
     const key="app_"+uid();
