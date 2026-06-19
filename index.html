@@ -180,8 +180,8 @@
   .step-thumb:active{opacity:.75;}
   .step-text-col{flex:1;min-width:0;}
   .step-photo-empty{
-    margin:6px 13px 0;border:1px solid #fed7aa;border-radius:8px;padding:6px 11px;
-    color:#ea580c;background:#fff7ed;font-size:12.5px;font-weight:600;
+    margin:6px 13px 0;border:1px solid #93c5fd;border-radius:8px;padding:6px 11px;
+    color:#1d4ed8;background:#eff6ff;font-size:12.5px;font-weight:600;
     display:inline-flex;align-items:center;gap:4px;
   }
   .step-body{padding:11px 13px 13px;}
@@ -206,7 +206,7 @@
     font-size:12.5px;font-weight:600;color:var(--ink);display:inline-flex;align-items:center;gap:4px;
   }
   .mini-btn:active{background:var(--bg);}
-  .mini-btn.photo{color:#ea580c;border-color:#fed7aa;background:#fff7ed;}
+  .mini-btn.photo{color:#1d4ed8;border-color:#93c5fd;background:#eff6ff;}
   .mini-btn.del{color:var(--danger);}
 
   .add-step-btn{
@@ -1344,7 +1344,7 @@ function renderStep(st,i,sub){
       wrap.appendChild(pw);
     } else {
       const e=document.createElement("div"); e.className="step-photo-empty";
-      e.textContent="📷 写真を追加（タップ）";
+      e.textContent="📷 写真";
       e.onclick=()=>directCamera(st,sub);
       wrap.appendChild(e);
     }
