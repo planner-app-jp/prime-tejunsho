@@ -477,10 +477,11 @@
 
   /* ===== 印刷スタイル ===== */
   @media print {
-    @page { size: A4 portrait; margin: 15mm 12mm; }
+    @page { size: A4 portrait; margin: 0 12mm; }
 
     /* bodyリセット */
-    html,body { overflow:visible!important; height:auto!important; background:white!important; }
+    html,body { overflow:visible!important; height:auto!important; background:white!important;
+      padding-top:12mm!important; padding-bottom:10mm!important; }
 
     /* UI要素を非表示 */
     header, #tabbar, #subtabbar, #homeScreen,
