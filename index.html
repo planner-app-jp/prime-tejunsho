@@ -613,7 +613,7 @@
     <button class="head-btn" id="homeBtn" style="display:none;">← ホーム</button>
     <h1 id="appTitle">プライム手順書</h1>
     <button class="head-btn cancel-btn" id="cancelEditBtn" style="display:none;">✕ 戻る</button>
-    <button class="head-btn" id="undoBtn" style="display:none;" onclick="undoLast()">↩ 戻す</button>
+    <button class="head-btn" id="undoBtn" style="opacity:0.35;" disabled onclick="undoLast()">↩ 戻す</button>
     <button class="head-btn" id="editToggleBtn" style="display:none;">✏️ 編集</button>
     <button class="head-btn" id="menuBtn" style="display:none;">☰</button>
   </div>
@@ -957,7 +957,7 @@ const procFlowCollapsed={}; // procFlowCollapsed[procId] = true/false
 let dataSnapshot=null;
 let undoStack=[];
 function pushUndo(){ undoStack.push(JSON.stringify(data)); if(undoStack.length>5) undoStack.shift(); updateUndoBtn(); }
-function updateUndoBtn(){ const b=$("undoBtn"); if(b) b.style.display=undoStack.length?"":"none"; }
+function updateUndoBtn(){ const b=$("undoBtn"); if(b){ b.style.display=""; b.disabled=!undoStack.length; b.style.opacity=undoStack.length?"1":"0.35"; } }
 async function undoLast(){
   if(!undoStack.length) return;
   data=JSON.parse(undoStack.pop()); updateUndoBtn();
