@@ -139,7 +139,7 @@
   .stab.active{color:var(--accent);border-bottom-color:var(--accent);}
   .stab.done{color:#16a34a;border-bottom-color:#16a34a;}
   .stab.active.done{color:#16a34a;border-bottom-color:#16a34a;}
-  .stab-add{flex:0 0 auto;border:none;background:none;color:#16a34a;padding:7px 8px 9px;font-size:15px;font-weight:700;}
+  .stab-add{flex:0 0 auto;border:none;background:none;color:var(--accent);padding:7px 8px 9px;font-size:15px;font-weight:700;}
   .stab.stab-drag-src{opacity:0!important;pointer-events:none!important;width:4px!important;min-width:4px!important;padding:0!important;overflow:hidden!important;}
   .stab-insert-indicator{position:absolute;top:50%;transform:translateY(-50%);width:4px;height:28px;background:var(--accent);border-radius:3px;pointer-events:none;z-index:50;}
 
@@ -210,10 +210,10 @@
   .mini-btn.del{color:var(--danger);}
 
   .add-step-btn{
-    width:100%;border:2px dashed #16a34a;background:#f0fdf4;color:#16a34a;
+    width:100%;border:2px dashed var(--accent);background:var(--accent-soft);color:var(--accent);
     border-radius:13px;padding:15px;font-size:15px;font-weight:700;margin-top:2px;
   }
-  .add-step-btn:active{background:#dcfce7;}
+  .add-step-btn:active{background:#daeaff;}
 
   /* サブ手順 */
   .substep-area{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line);}
@@ -226,8 +226,8 @@
   .substep-title-in:focus{outline:none;}
   .substep-body{padding:6px 13px 9px;}
   .substep-foot{display:flex;align-items:center;gap:6px;padding:7px 13px;border-top:1px solid var(--line);background:#eef1f6;}
-  .add-substep-btn{width:100%;border:2px dashed #16a34a;background:#f0fdf4;color:#16a34a;border-radius:13px;padding:10px;font-size:13px;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;margin-top:4px;}
-  .add-substep-btn:active{background:#dcfce7;}
+  .add-substep-btn{width:100%;border:2px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:13px;padding:10px;font-size:13px;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;margin-top:4px;}
+  .add-substep-btn:active{background:#daeaff;}
   .drag-handle{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;}
   .drag-handle:active{cursor:grabbing;}
   body.dragging,.dragging *{user-select:none;-webkit-user-select:none;}
