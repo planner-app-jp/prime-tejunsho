@@ -2751,18 +2751,38 @@ $("lightbox").addEventListener("click",e=>{
 $("menuBtn").onclick=()=>{ $("appVersionLabel").textContent="アプリバージョン："+APP_VERSION; showSheet("menuSheet"); };
 $("miExport").onclick=async ()=>{
   const procCount=data?.processes?.length||0;
-  if(!confirm(`📤 データを書き出します\n\n対象：今開いているアプリの全工程（${procCount}件）\n用途：メンバーへの共有 / バックアップ\n\n※ 書き出したJSONファイルをメンバーに送り、\n　 メンバーは「工程を追加する」で受け取れます\n\nよろしいですか？`)) return;
+  const choice=await new Promise(res=>{
+    const d=document.createElement("div");
+    d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-end;";
+    d.innerHTML=`<div style="background:#fff;width:100%;border-radius:16px 16px 0 0;padding:20px 16px 32px;"><p style="font-weight:700;font-size:16px;margin:0 0 6px;">データを書き出す</p><p style="font-size:13px;color:#64748b;margin:0 0 16px;">全${procCount}工程 + 写真をまとめてファイルに書き出します</p><button id="_expShare" style="width:100%;margin-bottom:10px;padding:14px;border-radius:10px;background:#1d4ed8;color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;">📤 共有する（LINE・メール・AirDrop）</button><button id="_expSave" style="width:100%;margin-bottom:10px;padding:14px;border-radius:10px;background:#f1f5f9;color:#1f2937;border:none;font-size:15px;font-weight:700;cursor:pointer;">💾 ファイルとして保存</button><button id="_expCancel" style="width:100%;padding:12px;border-radius:10px;background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:15px;cursor:pointer;">キャンセル</button></div>`;
+    document.body.appendChild(d);
+    d.querySelector("#_expShare").onclick=()=>{ document.body.removeChild(d); res("share"); };
+    d.querySelector("#_expSave").onclick=()=>{ document.body.removeChild(d); res("save"); };
+    d.querySelector("#_expCancel").onclick=()=>{ document.body.removeChild(d); res(null); };
+  });
+  if(!choice) return;
   hideSheets();
   toast("書き出し中…");
   const photos=await idbAllPhotos();
   const bundle={ app:"prime_manual", exportedAt:nowISO(), data, photos };
+  const fname=`手順書_${todayStr().replace(/\//g,"")}.json`;
   const blob=new Blob([JSON.stringify(bundle)],{type:"application/json"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url; a.download=`手順書_${todayStr().replace(/\//g,"")}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-  toast("JSONを書き出しました");
+  if(choice==="share" && navigator.share){
+    const file=new File([blob],fname,{type:"application/json"});
+    try{
+      await navigator.share({files:[file],title:"手順書データ"});
+      toast("共有しました");
+    }catch(e){
+      if(e.name!=="AbortError") toast("共有できませんでした");
+    }
+  } else {
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast("JSONを書き出しました");
+  }
 };
 $("miImport").onclick=()=>{ hideSheets(); $("importInput").value=""; $("importInput").click(); };
 $("importInput").addEventListener("change",async e=>{
