@@ -845,6 +845,15 @@
 <script>
 (function(){
 "use strict";
+/* ドメイン制限 */
+(function(){
+  const h=location.hostname;
+  const ok=h==="planner-app-jp.github.io"||h==="localhost"||h.startsWith("192.168.");
+  if(!ok){
+    document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;color:#444;padding:24px;text-align:center;"><p style="font-size:20px;font-weight:700;">⚠️ アクセス不可</p><p style="font-size:14px;">このアプリは許可されたURLでのみ使用できます。</p></div>';
+    throw new Error("Unauthorized domain");
+  }
+})();
 const $ = id => document.getElementById(id);
 const APP_VERSION = "v4";
 
