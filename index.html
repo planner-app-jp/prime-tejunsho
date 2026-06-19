@@ -656,9 +656,9 @@
   <div class="sheet">
     <div class="sheet-grip"></div>
     <div class="sheet-head"><h3>メニュー</h3><button class="close" data-close>×</button></div>
-    <button class="menu-item" id="miExport"><span class="ic">📤</span>データを書き出す（バックアップ／PC用）</button>
-    <button class="menu-item" id="miImport"><span class="ic">📥</span>データを読み込む（全置き換え）</button>
-    <button class="menu-item" id="miMerge"><span class="ic">➕</span>工程を追加する（既存を残す）</button>
+    <button class="menu-item" id="miExport"><span class="ic">📤</span><span>データを書き出す<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">今開いているアプリの全工程をJSONで保存。メンバーへの共有・バックアップに使う</span></span></button>
+    <button class="menu-item" id="miImport"><span class="ic">📥</span><span>データを読み込む（全置き換え）<span style="display:block;font-size:11px;color:#e57373;font-weight:400;margin-top:2px;">⚠ 今のデータがすべて消えます。機種変更・バックアップ復元用</span></span></button>
+    <button class="menu-item" id="miMerge"><span class="ic">➕</span><span>工程を追加する（既存を残す）<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">受け取ったJSONの工程を追加。自分のデータは消えない。共有された手順書の受け取りに使う</span></span></button>
     <button class="menu-item" id="miPrint" style="display:none;"><span class="ic">🖨️</span>印刷する／レイアウト確認</button>
     <button class="menu-item" id="miPptxExport" style="display:none;"><span class="ic">📑</span>PowerPointに出力する</button>
     <button class="menu-item" id="miPptxShare" style="display:none;"><span class="ic">📧</span>PowerPointをメール・LINEで共有</button>
@@ -2621,7 +2621,8 @@ $("lightbox").addEventListener("click",e=>{
 
 $("menuBtn").onclick=()=>{ $("appVersionLabel").textContent="アプリバージョン："+APP_VERSION; showSheet("menuSheet"); };
 $("miExport").onclick=async ()=>{
-  if(!confirm("データをJSONファイルとして書き出します。よろしいですか？")) return;
+  const procCount=data?.processes?.length||0;
+  if(!confirm(`📤 データを書き出します\n\n対象：今開いているアプリの全工程（${procCount}件）\n用途：メンバーへの共有 / バックアップ\n\n※ 書き出したJSONファイルをメンバーに送り、\n　 メンバーは「工程を追加する」で受け取れます\n\nよろしいですか？`)) return;
   hideSheets();
   toast("書き出し中…");
   const photos=await idbAllPhotos();
@@ -2637,7 +2638,7 @@ $("miExport").onclick=async ()=>{
 $("miImport").onclick=()=>{ hideSheets(); $("importInput").value=""; $("importInput").click(); };
 $("importInput").addEventListener("change",async e=>{
   const file=e.target.files[0]; if(!file) return;
-  if(!confirm("現在のデータを、読み込むファイルの内容で置き換えます。よろしいですか？\n（事前に書き出しでバックアップ推奨）")) return;
+  if(!confirm("⚠️ 全データを置き換えます\n\n今のデータはすべて消えて、ファイルの内容に入れ替わります。\n\n用途：機種変更・バックアップからの復元\n（手順書の共有には「工程を追加する」を使ってください）\n\n事前に「データを書き出す」でバックアップ推奨\n\n本当に実行しますか？")) return;
   try{
     const txt=await file.text();
     const bundle=JSON.parse(txt);
@@ -2664,7 +2665,7 @@ $("mergeInput").addEventListener("change",async e=>{
     const incoming=bundle.data.processes||[];
     if(!incoming.length){ toast("追加できる工程がありません"); return; }
     const names=incoming.map(p=>p.name||"(無題)").join("、");
-    if(!confirm(`以下の工程を追加します（既存のデータは残ります）\n\n${names}\n\nよろしいですか？`)) return;
+    if(!confirm(`➕ 工程を追加します\n\n追加される工程（${incoming.length}件）：\n${names}\n\n✅ 今のデータは消えません\n✅ 直後に「元に戻す」で取り消せます\n\nよろしいですか？`)) return;
     // 追加前のスナップショットを保存
     mergeUndoSnapshot=JSON.parse(JSON.stringify(data));
     // 写真は既存を残しつつ追加
