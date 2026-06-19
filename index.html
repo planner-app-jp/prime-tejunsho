@@ -586,6 +586,11 @@
     <div class="sheet-grip"></div>
     <div class="sheet-head"><h3 id="addAppSheetTitle">アプリを追加</h3><button class="close" data-close>×</button></div>
     <div class="sheet-body">
+      <div id="addBuiltinSection" style="display:none;">
+        <div class="menu-section-lbl">標準アプリ</div>
+        <div id="addBuiltinList" style="padding:8px 0;"></div>
+        <div class="menu-section-lbl">カスタムアプリを作成</div>
+      </div>
       <div class="field">
         <label>アプリ名</label>
         <input type="text" id="addAppNameInput" placeholder="例：工事手順書" autocomplete="off">
@@ -878,6 +883,9 @@ const MODULES = {
 let currentModule = null;
 let homeApps = []; // [{key, title, icon, color}] - カスタムアプリ
 let builtinOverrides = {}; // {key: {title, icon}} - ビルトインタイルの上書き
+let homeBuiltins = []; // ['tejunsho'] - ホームに表示するビルトインのkey一覧
+const BUILTIN_DEFS=[{key:"tejunsho",title:"プライム手順書",icon:"📝",desc:"工程・手順の管理",cls:"mod-tejunsho"}];
+async function saveHomeBuiltins(){ try{ await idbSet("meta","homeBuiltins",homeBuiltins); }catch(e){} }
 
 function getModuleConfig(key){
   if(!key) return null;
@@ -2867,9 +2875,9 @@ function renderHome(){
   const grid=$("homeGrid");
   grid.innerHTML="";
   grid.parentElement.classList.toggle("home-edit-mode",homeEditMode);
-  const builtins=[
-    {key:"tejunsho",title:"プライム手順書",icon:"📝",desc:"工程・手順の管理",cls:"mod-tejunsho"},
-  ].map(b=>({...b,title:(builtinOverrides[b.key]?.title||b.title),icon:(builtinOverrides[b.key]?.icon||b.icon),builtin:true}));
+  const builtins=BUILTIN_DEFS
+    .filter(b=>homeBuiltins.includes(b.key))
+    .map(b=>({...b,title:(builtinOverrides[b.key]?.title||b.title),icon:(builtinOverrides[b.key]?.icon||b.icon),builtin:true}));
   const customs=homeApps.map(a=>({key:a.key,title:a.title,icon:a.icon,desc:"",cls:a.color||"mod-custom-prime",custom:true,appObj:a}));
   [...builtins,...customs].forEach(app=>{
     const btn=document.createElement("button");
@@ -2959,6 +2967,21 @@ function openAddAppSheet(existingApp, builtinKey, builtinTitle, builtinIcon){
   $("addAppSheetTitle").textContent=(existingApp||builtinKey)?"アプリを編集":"アプリを追加";
   $("addAppSaveBtn").textContent=(existingApp||builtinKey)?"保存":"作成";
   $("addAppDelBtn").style.display=existingApp?"block":"none";
+  // 標準アプリ（未追加のもの）を表示
+  const sec=$("addBuiltinSection"); const list=$("addBuiltinList"); list.innerHTML="";
+  if(!existingApp&&!builtinKey){
+    const uninstalled=BUILTIN_DEFS.filter(b=>!homeBuiltins.includes(b.key));
+    if(uninstalled.length){
+      uninstalled.forEach(b=>{
+        const btn=document.createElement("button");
+        btn.style.cssText="display:flex;align-items:center;gap:10px;width:calc(100% - 32px);margin:0 16px 8px;padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:15px;font-weight:600;cursor:pointer;";
+        btn.innerHTML=`<span style="font-size:22px;">${b.icon}</span><div style="text-align:left;"><div>${b.title}</div><div style="font-size:12px;color:var(--muted);font-weight:400;">${b.desc}</div></div>`;
+        btn.onclick=async()=>{ homeBuiltins.push(b.key); await saveHomeBuiltins(); hideSheets(); renderHome(); toast(`「${b.title}」を追加しました`); };
+        list.appendChild(btn);
+      });
+      sec.style.display="";
+    } else { sec.style.display="none"; }
+  } else { sec.style.display="none"; }
   showSheet("addAppSheet");
 }
 $("addAppIconPick").querySelectorAll(".icon-opt").forEach(b=>{
@@ -3370,6 +3393,15 @@ async function exportToPptx(proc,sub,mod){
     await openDB();
     homeApps=await idbGet("meta","homeApps")||[];
     builtinOverrides=await idbGet("meta","builtinOverrides")||{};
+    const storedBuiltins=await idbGet("meta","homeBuiltins");
+    if(storedBuiltins==null){
+      // 移行：tejunshoデータがあれば既存ユーザーとみなして表示
+      const tejData=await idbGet("meta","data");
+      homeBuiltins=tejData?["tejunsho"]:[];
+      await saveHomeBuiltins();
+    } else {
+      homeBuiltins=storedBuiltins;
+    }
     showHome();
   }catch(e){
     const _el=$("docInfoLabel"); if(_el) _el.textContent="起動エラー："+(e.message||e);
