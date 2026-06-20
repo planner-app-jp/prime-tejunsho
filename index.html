@@ -1432,7 +1432,7 @@ function renderStep(st,i,sub){
       const photoBtn=document.createElement("button");
       photoBtn.className="mini-btn photo";
       photoBtn.innerHTML="📷 写真";
-      photoBtn.onclick=()=>directCamera(st,sub);
+      photoBtn.onclick=()=>pickPhoto(st,sub);
       foot.appendChild(photoBtn);
     }
   }
