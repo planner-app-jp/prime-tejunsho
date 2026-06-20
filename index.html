@@ -1359,7 +1359,7 @@ function renderStep(st,i,sub){
     } else {
       const e=document.createElement("div"); e.className="step-photo-empty";
       e.textContent="📷 写真";
-      e.onclick=()=>directCamera(st,sub);
+      e.onclick=()=>pickPhoto(st,sub);
       wrap.appendChild(e);
     }
     const body=document.createElement("div"); body.className="step-body";
