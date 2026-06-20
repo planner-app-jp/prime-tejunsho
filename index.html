@@ -2986,7 +2986,7 @@ function openAddAppSheet(existingApp, builtinKey, builtinTitle, builtinIcon){
   $("addAppIconPick").querySelectorAll(".icon-opt").forEach(b=>b.classList.toggle("sel",b.dataset.icon===addAppSelectedIcon));
   $("addAppSheetTitle").textContent=(existingApp||builtinKey)?"アプリを編集":"アプリを追加";
   $("addAppSaveBtn").textContent=(existingApp||builtinKey)?"保存":"作成";
-  $("addAppDelBtn").style.display=existingApp?"block":"none";
+  $("addAppDelBtn").style.display=(existingApp||builtinKey)?"block":"none";
   showSheet("addAppSheet");
 }
 $("addAppIconPick").querySelectorAll(".icon-opt").forEach(b=>{
@@ -3011,6 +3011,13 @@ $("addAppSaveBtn").onclick=async()=>{
   }
 };
 $("addAppDelBtn").onclick=async()=>{
+  if(addAppBuiltinKey){
+    if(!confirm(`「${$("addAppNameInput").value}」をホームから削除しますか？\n（データは消えません）`)) return;
+    homeBuiltins=homeBuiltins.filter(k=>k!==addAppBuiltinKey);
+    await saveHomeBuiltins();
+    hideSheets(); renderHome(); toast("削除しました");
+    return;
+  }
   if(!addAppEditTarget) return;
   if(!confirm(`「${addAppEditTarget.title}」を削除しますか？\n（アプリのデータも消えます）`)) return;
   // データも削除
