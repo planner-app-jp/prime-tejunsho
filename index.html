@@ -2762,7 +2762,7 @@ $("miExport").onclick=async ()=>{
   hideSheets();
   toast("書き出し中…");
   const photos=await idbAllPhotos();
-  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:currentModule, data, photos };
+  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:currentModule, homeApps, builtinOverrides, homeBuiltins, data, photos };
   const fname=`手順書_${todayStr().replace(/\//g,"")}.json`;
   const blob=new Blob([JSON.stringify(bundle)],{type:"application/json"});
   if(choice==="share" && navigator.share){
@@ -2792,11 +2792,22 @@ $("importInput").addEventListener("change",async e=>{
     if(!bundle.data||!bundle.data.processes) throw new Error("形式が違います");
     // 写真をDBへ
     const photos=bundle.photos||{};
-    // 既存写真クリア
-    await clearStore("photos");
-    photoCache={};
+    await clearStore("photos"); photoCache={};
     for(const k in photos){ await idbSet("photos",k,photos[k]); photoCache[k]=photos[k]; }
-    // targetModuleがあればそのアプリへ復元、なければ現在のアプリへ
+    // homeApps・homeBuiltins・builtinOverridesを復元（新形式のみ）
+    if(bundle.homeApps){
+      homeApps=bundle.homeApps;
+      await saveHomeApps();
+    }
+    if(bundle.homeBuiltins){
+      homeBuiltins=bundle.homeBuiltins;
+      await saveHomeBuiltins();
+    }
+    if(bundle.builtinOverrides){
+      builtinOverrides=bundle.builtinOverrides;
+      await idbSet("meta","builtinOverrides",builtinOverrides);
+    }
+    // データを正しいアプリキーへ復元
     const restoreKey=bundle.targetModule||currentModule;
     const restoreCfg=getModuleConfig(restoreKey);
     const restoreDataKey=restoreCfg?.dataKey||"data";
@@ -2804,6 +2815,8 @@ $("importInput").addEventListener("change",async e=>{
     await idbSet("meta",restoreDataKey,data);
     if(restoreKey&&restoreKey!==currentModule){
       await openModule(restoreKey);
+    } else if(!currentModule){
+      showHome();
     } else {
       renderAll();
     }
