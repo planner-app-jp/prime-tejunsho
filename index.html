@@ -2813,12 +2813,10 @@ $("importInput").addEventListener("change",async e=>{
     const restoreDataKey=restoreCfg?.dataKey||"data";
     data=bundle.data;
     await idbSet("meta",restoreDataKey,data);
-    if(restoreKey&&restoreKey!==currentModule){
-      await openModule(restoreKey);
-    } else if(!currentModule){
-      showHome();
-    } else {
+    if(restoreKey&&restoreKey===currentModule){
       renderAll();
+    } else {
+      showHome();
     }
     toast("読み込みました");
   }catch(err){ toast("読み込みに失敗：形式をご確認ください"); }
