@@ -2759,7 +2759,7 @@ $("miExport").onclick=async ()=>{
   hideSheets();
   toast("書き出し中…");
   const photos=await idbAllPhotos();
-  const bundle={ app:"prime_manual", exportedAt:nowISO(), data, photos };
+  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:currentModule, data, photos };
   const fname=`手順書_${todayStr().replace(/\//g,"")}.json`;
   const blob=new Blob([JSON.stringify(bundle)],{type:"application/json"});
   if(choice==="share" && navigator.share){
@@ -2793,9 +2793,17 @@ $("importInput").addEventListener("change",async e=>{
     await clearStore("photos");
     photoCache={};
     for(const k in photos){ await idbSet("photos",k,photos[k]); photoCache[k]=photos[k]; }
+    // targetModuleがあればそのアプリへ復元、なければ現在のアプリへ
+    const restoreKey=bundle.targetModule||currentModule;
+    const restoreCfg=getModuleConfig(restoreKey);
+    const restoreDataKey=restoreCfg?.dataKey||"data";
     data=bundle.data;
-    await saveData();
-    renderAll();
+    await idbSet("meta",restoreDataKey,data);
+    if(restoreKey&&restoreKey!==currentModule){
+      await openModule(restoreKey);
+    } else {
+      renderAll();
+    }
     toast("読み込みました");
   }catch(err){ toast("読み込みに失敗：形式をご確認ください"); }
 });
@@ -2926,7 +2934,7 @@ function showHome(){
   $("homeScreen").style.display="block";
   $("homeBtn").style.display="none";
   $("editToggleBtn").style.display="none";
-  $("menuBtn").style.display="none";
+  $("menuBtn").style.display="";
   $("appTitle").textContent="手順書管理";
   const _dil=$("docInfoLabel"); if(_dil) _dil.textContent="";
   renderHome();
