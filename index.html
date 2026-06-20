@@ -2795,12 +2795,7 @@ $("importInput").addEventListener("change",async e=>{
     for(const k in photos){ await idbSet("photos",k,photos[k]); photoCache[k]=photos[k]; }
     data=bundle.data;
     await saveData();
-    // プライム手順書タイルをホームに追加
-    if(!homeBuiltins.includes("tejunsho")){
-      homeBuiltins.push("tejunsho");
-      await saveHomeBuiltins();
-    }
-    renderAll(); showHome();
+    renderAll();
     toast("読み込みました");
   }catch(err){ toast("読み込みに失敗：形式をご確認ください"); }
 });
