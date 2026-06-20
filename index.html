@@ -573,7 +573,10 @@
   <div class="home-top">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <h1 style="margin:0;">📋 手順書管理</h1>
-      <button id="homeEditBtn" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:700;">編集</button>
+      <div style="display:flex;gap:8px;">
+        <button id="homeMenuBtn" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:700;">☰</button>
+        <button id="homeEditBtn" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:9px;padding:7px 13px;font-size:13px;font-weight:700;">編集</button>
+      </div>
     </div>
     <p>アプリを選んでください</p>
   </div>
@@ -2925,6 +2928,7 @@ function renderHome(){
 }
 
 $("homeEditBtn").onclick=()=>{ homeEditMode=!homeEditMode; renderHome(); };
+$("homeMenuBtn").onclick=()=>{ $("appVersionLabel").textContent="アプリバージョン："+APP_VERSION; showSheet("menuSheet"); };
 
 function showHome(){
   if(editMode) toggleEdit();
