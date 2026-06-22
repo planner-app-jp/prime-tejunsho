@@ -2846,8 +2846,12 @@ $("importInput").addEventListener("change",async e=>{
   if(!confirm("⚠️ 全データを置き換えます\n\n今のデータはすべて消えて、ファイルの内容に入れ替わります。\n\n用途：機種変更・バックアップからの復元\n（手順書の共有には「工程を追加する」を使ってください）\n\n事前に「データを書き出す」でバックアップ推奨\n\n本当に実行しますか？")) return;
   try{
     const txt=await file.text();
-    const bundle=JSON.parse(txt);
-    if(!bundle.data||!bundle.data.processes) throw new Error("形式が違います");
+    let bundle;
+    try{ bundle=JSON.parse(txt); }catch(e){ throw new Error("JSONの解析に失敗しました"); }
+    if(typeof bundle!=="object"||bundle===null) throw new Error("ファイル形式が違います");
+    // dataが無い場合は空で初期化（古い形式対応）
+    if(!bundle.data) bundle.data={ processes:[], activeTab:null };
+    if(!Array.isArray(bundle.data.processes)) bundle.data.processes=[];
     // 写真をDBへ
     const photos=bundle.photos||{};
     await clearStore("photos"); photoCache={};
@@ -2877,7 +2881,7 @@ $("importInput").addEventListener("change",async e=>{
       showHome();
     }
     toast("読み込みました");
-  }catch(err){ toast("読み込みに失敗：形式をご確認ください"); }
+  }catch(err){ toast("読み込みに失敗："+err.message); }
 });
 $("miMerge").onclick=()=>{ hideSheets(); $("mergeInput").value=""; $("mergeInput").click(); };
 $("mergeInput").addEventListener("change",async e=>{
@@ -2908,7 +2912,7 @@ $("mergeInput").addEventListener("change",async e=>{
       data=mergeUndoSnapshot; mergeUndoSnapshot=null;
       await saveData(); renderAll(); toast("元に戻しました");
     });
-  }catch(err){ toast("読み込みに失敗：形式をご確認ください"); }
+  }catch(err){ toast("読み込みに失敗："+err.message); }
 });
 
 function clearStore(store){
