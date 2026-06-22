@@ -3132,56 +3132,73 @@ $("miExcelExport").onclick=async()=>{
   else await exportCustomToExcel(p,s,mod);
 };
 
-// アノテーションをcanvasに焼き込んだ画像データURLを返す
-async function getPhotoWithAnnos(photoId,annotations){
-  return new Promise(resolve=>{
-    const src=photoCache[photoId];
-    if(!src){ resolve(null); return; }
-    if(!annotations||!annotations.length){ resolve(src); return; }
-    const img=new Image();
-    img.onload=()=>{
-      const c=document.createElement('canvas');
-      c.width=img.naturalWidth; c.height=img.naturalHeight;
-      const ctx=c.getContext('2d');
-      ctx.drawImage(img,0,0);
-      const iw=img.naturalWidth, ih=img.naturalHeight, base=Math.min(iw,ih);
-      annotations.forEach(a=>{
-        const x=a.x/100*iw, y=a.y/100*ih;
-        const sizePx=Math.max(14,(a.size/100)*base);
-        const col=a.color||'#ff3b30';
-        ctx.save(); ctx.fillStyle=col; ctx.strokeStyle=col;
-        if(a.type==='circle'){
-          ctx.lineWidth=Math.max(2,base*0.006);
-          ctx.beginPath(); ctx.arc(x+sizePx/2,y+sizePx/2,sizePx/2,0,Math.PI*2); ctx.stroke();
-        } else if(a.type==='num'){
-          ctx.beginPath(); ctx.arc(x+sizePx/2,y+sizePx/2,sizePx/2,0,Math.PI*2); ctx.fill();
-          ctx.fillStyle='#fff';
-          ctx.font=`bold ${sizePx*0.6}px sans-serif`;
-          ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText(a.text||'',x+sizePx/2,y+sizePx/2);
-        } else if(a.type==='text'){
-          ctx.font=`bold ${sizePx}px sans-serif`;
-          ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,sizePx*0.12);
-          ctx.strokeText(a.text||'',x,y+sizePx);
-          ctx.fillText(a.text||'',x,y+sizePx);
-        } else if(a.type==='arrow'){
-          ctx.font=`${sizePx*1.4}px sans-serif`;
-          ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,sizePx*0.1);
-          ctx.strokeText('➜',x,y+sizePx*1.4);
-          ctx.fillText('➜',x,y+sizePx*1.4);
-        } else if(a.type==='rect'){
-          const wPx=Math.max(20,(a.size/100)*iw);
-          const hPx=Math.max(10,wPx*0.6*(a.hRatio||1));
-          ctx.lineWidth=Math.max(2,base*0.005);
-          ctx.strokeRect(x,y,wPx,hPx);
-        }
-        ctx.restore();
-      });
-      resolve(c.toDataURL('image/jpeg',0.92));
-    };
-    img.onerror=()=>resolve(src);
-    img.src=src;
+// canvasにアノテーションを描く共通関数
+function drawAnnosOnCanvas(ctx,annotations,iw,ih){
+  const base=Math.min(iw,ih);
+  annotations.forEach(a=>{
+    const x=a.x/100*iw, y=a.y/100*ih;
+    const sizePx=Math.max(14,(a.size/100)*base);
+    const col=a.color||'#ff3b30';
+    ctx.save(); ctx.fillStyle=col; ctx.strokeStyle=col;
+    if(a.type==='circle'){
+      ctx.lineWidth=Math.max(2,base*0.006);
+      ctx.beginPath(); ctx.arc(x+sizePx/2,y+sizePx/2,sizePx/2,0,Math.PI*2); ctx.stroke();
+    } else if(a.type==='num'){
+      ctx.beginPath(); ctx.arc(x+sizePx/2,y+sizePx/2,sizePx/2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font=`bold ${sizePx*0.6}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(a.text||'',x+sizePx/2,y+sizePx/2);
+    } else if(a.type==='text'){
+      ctx.font=`bold ${sizePx}px sans-serif`;
+      ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,sizePx*0.12);
+      ctx.strokeText(a.text||'',x,y+sizePx); ctx.fillText(a.text||'',x,y+sizePx);
+    } else if(a.type==='arrow'){
+      ctx.font=`${sizePx*1.4}px sans-serif`;
+      ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,sizePx*0.1);
+      ctx.strokeText('➜',x,y+sizePx*1.4); ctx.fillText('➜',x,y+sizePx*1.4);
+    } else if(a.type==='rect'){
+      const wPx=Math.max(20,(a.size/100)*iw);
+      const hPx=Math.max(10,wPx*0.6*(a.hRatio||1));
+      ctx.lineWidth=Math.max(2,base*0.005);
+      ctx.strokeRect(x,y,wPx,hPx);
+    }
+    ctx.restore();
   });
+}
+
+// アノテーションをcanvasに焼き込んだ画像データURLを返す（EXIF回転対応）
+async function getPhotoWithAnnos(photoId,annotations){
+  const src=photoCache[photoId];
+  if(!src) return null;
+
+  // createImageBitmap + imageOrientation でEXIF回転を正しく反映
+  try{
+    const resp=await fetch(src);
+    const blob=await resp.blob();
+    const bitmap=await createImageBitmap(blob,{imageOrientation:'from-image'});
+    const c=document.createElement('canvas');
+    c.width=bitmap.width; c.height=bitmap.height;
+    const ctx=c.getContext('2d');
+    ctx.drawImage(bitmap,0,0);
+    bitmap.close();
+    if(annotations&&annotations.length) drawAnnosOnCanvas(ctx,annotations,c.width,c.height);
+    return c.toDataURL('image/jpeg',0.92);
+  }catch(e){
+    // フォールバック：旧来のImage()方式
+    return new Promise(resolve=>{
+      const img=new Image();
+      img.onload=()=>{
+        const c=document.createElement('canvas');
+        c.width=img.naturalWidth; c.height=img.naturalHeight;
+        const ctx=c.getContext('2d');
+        ctx.drawImage(img,0,0);
+        if(annotations&&annotations.length) drawAnnosOnCanvas(ctx,annotations,c.width,c.height);
+        resolve(c.toDataURL('image/jpeg',0.92));
+      };
+      img.onerror=()=>resolve(src);
+      img.src=src;
+    });
+  }
 }
 
 // 工事写真帳形式で印刷
