@@ -549,9 +549,9 @@
     #printDateBar { display:flex!important; justify-content:space-between; align-items:baseline; margin-bottom:3mm; }
     #printDateBar .ph-title { font-size:17px; font-weight:700; color:#1f2937; }
     #printDateBar .ph-date { font-size:11px; color:#555; }
-    /* 写真 */
-    .step-photo { max-height:200px!important; }
-    .step-thumb { width:155px!important; height:auto!important; max-height:200px!important; object-fit:contain!important; }
+    /* 写真 — object-fit:noneにしてレターボックスを排除（アノテーション位置ズレ防止） */
+    .step-photo { width:100%!important; height:auto!important; max-height:none!important; object-fit:none!important; }
+    .step-thumb { width:130px!important; height:auto!important; max-height:none!important; object-fit:none!important; }
     .step-media-row { padding:8px 12px 10px!important; }
     .step-body { padding:8px 12px 10px!important; }
     .step-text-view { font-size:13px!important; }
@@ -1346,6 +1346,7 @@ function renderStep(st,i,sub){
       const img=document.createElement("img"); img.className="step-photo"; img.src=photoCache[st.photoId];
       pw.appendChild(img);
       const layer=document.createElement("div"); layer.className="anno-layer";
+      pw.appendChild(layer);
       img.onload=()=>renderAnnotations(layer,st.annotations,img);
       if(img.complete) renderAnnotations(layer,st.annotations,img);
       pw.onclick=()=>openAnnoEditor(st,sub);
@@ -1581,7 +1582,9 @@ function renderAnnotations(layer,annos,img){
   if(!img.clientWidth||!img.naturalWidth){ requestAnimationFrame(()=>renderAnnotations(layer,annos,img)); return; }
   layer.innerHTML="";
   const r=getContainRect(img);
-  layer.style.cssText=`position:absolute;left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;pointer-events:none;`;
+  const cw=img.clientWidth, ch=img.clientHeight;
+  // パーセント指定で印刷時も正しくスケールする
+  layer.style.cssText=`position:absolute;left:${r.x/cw*100}%;top:${r.y/ch*100}%;width:${r.w/cw*100}%;height:${r.h/ch*100}%;pointer-events:none;`;
   (annos||[]).forEach(a=>{
     const el=document.createElement("div");
     el.className="anno-mark "+a.type;
@@ -2040,8 +2043,8 @@ function openAnnoEditor(st,sub){
   updateAnnoColor();
   $("annoImg").src=photoCache[st.photoId];
   $("annoEditor").classList.remove("hidden");
-  $("annoImg").onload=drawAnnoMarks;
-  if($("annoImg").complete) drawAnnoMarks();
+  $("annoImg").onload=()=>requestAnimationFrame(drawAnnoMarks);
+  if($("annoImg").complete) requestAnimationFrame(drawAnnoMarks);
 }
 function closeAnnoEditor(){
   $("annoEditor").classList.add("hidden");
@@ -2104,26 +2107,55 @@ function placeMark(el,a,iw,ih,interactive){
   const c=a.color||'#ff3b30';
   el.style.left=a.x+"%"; el.style.top=a.y+"%";
   const sizePx=Math.max(14,(a.size/100)*base);
-  if(a.type==="circle"){
-    el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
-    el.style.borderWidth=Math.max(2,base*0.006)+"px";
-    el.style.borderColor=c;
-  } else if(a.type==="num"){
-    el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
-    el.style.fontSize=(sizePx*0.55)+"px"; el.textContent=a.text||"";
-    el.style.background=c;
-  } else if(a.type==="text"){
-    el.style.fontSize=sizePx+"px"; el.textContent=a.text||"";
-    el.style.color=c;
-  } else if(a.type==="arrow"){
-    el.style.fontSize=(sizePx*1.4)+"px"; el.textContent="➜";
-    el.style.color=c;
-  } else if(a.type==="rect"){
-    const wPx=Math.max(20,(a.size/100)*iw);
-    const hPx=Math.max(10,wPx*0.6*(a.hRatio||1));
-    el.style.width=wPx+"px"; el.style.height=hPx+"px";
-    el.style.borderWidth=Math.max(2,base*0.005)+"px";
-    el.style.borderColor=c;
+  if(interactive){
+    // 編集モード：ピクセル指定（ドラッグ操作のため）
+    if(a.type==="circle"){
+      el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
+      el.style.borderWidth=Math.max(2,base*0.006)+"px";
+      el.style.borderColor=c;
+    } else if(a.type==="num"){
+      el.style.width=sizePx+"px"; el.style.height=sizePx+"px";
+      el.style.fontSize=(sizePx*0.55)+"px"; el.textContent=a.text||"";
+      el.style.background=c;
+    } else if(a.type==="text"){
+      el.style.fontSize=sizePx+"px"; el.textContent=a.text||"";
+      el.style.color=c;
+    } else if(a.type==="arrow"){
+      el.style.fontSize=(sizePx*1.4)+"px"; el.textContent="➜";
+      el.style.color=c;
+    } else if(a.type==="rect"){
+      const wPx=Math.max(20,(a.size/100)*iw);
+      const hPx=Math.max(10,wPx*0.6*(a.hRatio||1));
+      el.style.width=wPx+"px"; el.style.height=hPx+"px";
+      el.style.borderWidth=Math.max(2,base*0.005)+"px";
+      el.style.borderColor=c;
+    }
+  } else {
+    // 表示/印刷モード：パーセント指定でスケールに追従
+    const sWPct=Math.max(2,sizePx/iw*100);
+    const sHPct=Math.max(2,sizePx/ih*100);
+    const bwPct=Math.max(0.3,base*0.006/iw*100);
+    if(a.type==="circle"){
+      el.style.width=sWPct+"%"; el.style.height=sHPct+"%";
+      el.style.borderWidth=bwPct+"%";
+      el.style.borderColor=c;
+    } else if(a.type==="num"){
+      el.style.width=sWPct+"%"; el.style.height=sHPct+"%";
+      el.style.fontSize=(sizePx*0.55)+"px"; el.textContent=a.text||"";
+      el.style.background=c;
+    } else if(a.type==="text"){
+      el.style.fontSize=sizePx+"px"; el.textContent=a.text||"";
+      el.style.color=c;
+    } else if(a.type==="arrow"){
+      el.style.fontSize=(sizePx*1.4)+"px"; el.textContent="➜";
+      el.style.color=c;
+    } else if(a.type==="rect"){
+      const rWPct=Math.max(5,(a.size/100)*100);
+      const rHPct=Math.max(3,rWPct*0.6*(a.hRatio||1)*iw/ih);
+      el.style.width=rWPct+"%"; el.style.height=rHPct+"%";
+      el.style.borderWidth=bwPct+"%";
+      el.style.borderColor=c;
+    }
   }
 }
 // 追加
