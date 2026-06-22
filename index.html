@@ -479,8 +479,32 @@
   .color-opt{width:36px;height:36px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:.1s;}
   .color-opt.sel{border-color:var(--ink);transform:scale(1.15);}
 
+  /* ===== 工事写真帳スタイル ===== */
+  #plogContainer{display:none;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;}
+  .plog-title-bar{font-size:13.5pt;font-weight:700;text-align:center;padding:0 0 3mm;border-bottom:1.5pt solid #333;margin-bottom:4mm;display:flex;justify-content:space-between;align-items:baseline;}
+  .plog-title-name{font-size:13.5pt;font-weight:700;}
+  .plog-title-date{font-size:9pt;font-weight:400;color:#555;}
+  .plog-subtab-header{font-size:11pt;font-weight:700;background:#eef2f7;padding:2mm 3mm;margin:3mm 0 2mm;border-left:3pt solid #1f6feb;}
+  .plog-row{display:flex;break-inside:avoid;page-break-inside:avoid;margin-bottom:3.5mm;border:0.5pt solid #777;}
+  .plog-img-col{flex:0 0 58%;border-right:0.5pt solid #777;overflow:hidden;background:#f8f8f8;}
+  .plog-img{display:block;width:100%;height:auto;}
+  .plog-info-col{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .plog-table{border-collapse:collapse;width:100%;}
+  .plog-table td{border:0.5pt solid #777;padding:1.5mm 2.5mm;font-size:10pt;vertical-align:middle;}
+  .plog-th{width:33%;font-weight:700;background:#f0f0f0;white-space:nowrap;}
+  .plog-desc{padding:2.5mm 3mm;font-size:9.5pt;flex:1;border-top:0.5pt solid #777;line-height:1.55;}
+  .plog-step-title{font-weight:700;margin-bottom:1.5mm;font-size:10pt;}
+  .plog-text-row{padding:2mm 3mm;font-size:9.5pt;break-inside:avoid;border-bottom:0.3pt solid #ccc;margin-bottom:1mm;}
+
   /* ===== 印刷スタイル ===== */
   @media print {
+    /* 工事写真帳モード */
+    body[data-plog] header,
+    body[data-plog] #tabbar,
+    body[data-plog] #processHead,
+    body[data-plog] #content,
+    body[data-plog] #printDateBar{display:none!important;}
+    body[data-plog] #plogContainer{display:block!important;}
     @page { size: A4 portrait; margin: 0 12mm; }
     * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
 
@@ -630,6 +654,8 @@
 
 <!-- 印刷ヘッダー（通常時非表示） -->
 <div id="printDateBar" style="display:none;"></div>
+<!-- 工事写真帳コンテナ（印刷時のみ表示） -->
+<div id="plogContainer"></div>
 
 <!-- 工程ヘッダー -->
 <div class="process-head" id="processHead" style="display:none;">
@@ -3106,41 +3132,131 @@ $("miExcelExport").onclick=async()=>{
   else await exportCustomToExcel(p,s,mod);
 };
 
-$("miPrint").onclick=()=>{
-  const p=curProcess();
-  if(!p){ toast("手順がありません"); return; }
-  if(!confirm(`「${p.name}」を印刷しますか？`)) return;
-  hideSheets();
+// アノテーションをcanvasに焼き込んだ画像データURLを返す
+async function getPhotoWithAnnos(photoId,annotations){
+  return new Promise(resolve=>{
+    const src=photoCache[photoId];
+    if(!src){ resolve(null); return; }
+    if(!annotations||!annotations.length){ resolve(src); return; }
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.naturalWidth; c.height=img.naturalHeight;
+      const ctx=c.getContext('2d');
+      ctx.drawImage(img,0,0);
+      const iw=img.naturalWidth, ih=img.naturalHeight, base=Math.min(iw,ih);
+      annotations.forEach(a=>{
+        const x=a.x/100*iw, y=a.y/100*ih;
+        const sizePx=Math.max(14,(a.size/100)*base);
+        const col=a.color||'#ff3b30';
+        ctx.save(); ctx.fillStyle=col; ctx.strokeStyle=col;
+        if(a.type==='circle'){
+          ctx.lineWidth=Math.max(2,base*0.006);
+          ctx.beginPath(); ctx.arc(x+sizePx/2,y+sizePx/2,sizePx/2,0,Math.PI*2); ctx.stroke();
+        } else if(a.type==='num'){
+          ctx.beginPath(); ctx.arc(x+sizePx/2,y+sizePx/2,sizePx/2,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#fff';
+          ctx.font=`bold ${sizePx*0.6}px sans-serif`;
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(a.text||'',x+sizePx/2,y+sizePx/2);
+        } else if(a.type==='text'){
+          ctx.font=`bold ${sizePx}px sans-serif`;
+          ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,sizePx*0.12);
+          ctx.strokeText(a.text||'',x,y+sizePx);
+          ctx.fillText(a.text||'',x,y+sizePx);
+        } else if(a.type==='arrow'){
+          ctx.font=`${sizePx*1.4}px sans-serif`;
+          ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,sizePx*0.1);
+          ctx.strokeText('➜',x,y+sizePx*1.4);
+          ctx.fillText('➜',x,y+sizePx*1.4);
+        } else if(a.type==='rect'){
+          const wPx=Math.max(20,(a.size/100)*iw);
+          const hPx=Math.max(10,wPx*0.6*(a.hRatio||1));
+          ctx.lineWidth=Math.max(2,base*0.005);
+          ctx.strokeRect(x,y,wPx,hPx);
+        }
+        ctx.restore();
+      });
+      resolve(c.toDataURL('image/jpeg',0.92));
+    };
+    img.onerror=()=>resolve(src);
+    img.src=src;
+  });
+}
+
+// 工事写真帳形式で印刷
+async function printPhotoLog(p){
   const defaultDate=fmtDate(p.updatedAt||data.updatedAt);
   const inputDate=prompt("更新日を入力してください（変更可）",defaultDate);
   if(inputDate===null) return;
-  const appName=$("appTitle").textContent||"プライム手順書";
-  $("printDateBar").innerHTML=`<span class="ph-title">${escapeHtml(appName)}</span><span class="ph-date">更新日：${escapeHtml(inputDate||defaultDate)}</span>`;
-  const origSubtab=data.activeSubtab;
-  const container=$("content");
+  const appName=$("appTitle").textContent||"手順書";
+  const plogEl=$("plogContainer");
+  plogEl.innerHTML='';
+
+  // タイトルバー
+  const tbar=document.createElement('div'); tbar.className='plog-title-bar';
+  tbar.innerHTML=`<span class="plog-title-name">${escapeHtml(p.name)}</span><span class="plog-title-date">更新日：${escapeHtml(inputDate||defaultDate)}</span>`;
+  plogEl.appendChild(tbar);
+
   const subtabs=p.subtabs||[];
-  if(subtabs.length<=1){
-    window.print();
-    $("printDateBar").innerHTML="";
-    return;
+  let photoNum=0;
+
+  for(const s of subtabs){
+    if(subtabs.length>1){
+      const sh=document.createElement('div'); sh.className='plog-subtab-header';
+      sh.textContent=s.name||''; plogEl.appendChild(sh);
+    }
+    for(const st of (s.steps||[])){
+      // メイン手順 + サブ手順をまとめて処理
+      const items=[{obj:st},...(st.subSteps||[]).map(ss=>({obj:ss,isSub:true}))];
+      for(const {obj,isSub} of items){
+        const hasPhoto=obj.photoId&&photoCache[obj.photoId];
+        if(hasPhoto){
+          photoNum++;
+          const imgSrc=await getPhotoWithAnnos(obj.photoId,obj.annotations||[]);
+          if(!imgSrc) continue;
+          const row=document.createElement('div'); row.className='plog-row';
+
+          const lc=document.createElement('div'); lc.className='plog-img-col';
+          const im=document.createElement('img'); im.className='plog-img'; im.src=imgSrc;
+          lc.appendChild(im);
+
+          const rc=document.createElement('div'); rc.className='plog-info-col';
+          const tbl=document.createElement('table'); tbl.className='plog-table';
+          tbl.innerHTML=`<tr><td class="plog-th">建物</td><td>${escapeHtml(appName)}</td></tr>`
+            +`<tr><td class="plog-th">場所</td><td>${escapeHtml(s.name||p.name||'')}</td></tr>`
+            +`<tr><td class="plog-th">写真番号</td><td>No. ${photoNum}</td></tr>`;
+          rc.appendChild(tbl);
+
+          const desc=document.createElement('div'); desc.className='plog-desc';
+          if(obj.title){ const tn=document.createElement('div'); tn.className='plog-step-title'; tn.textContent=obj.title; desc.appendChild(tn); }
+          if(obj.text){ const td=document.createElement('div'); td.innerHTML=textToDisplay(obj.text); desc.appendChild(td); }
+          rc.appendChild(desc);
+
+          row.appendChild(lc); row.appendChild(rc);
+          plogEl.appendChild(row);
+        } else if(obj.title||obj.text){
+          const tr=document.createElement('div'); tr.className='plog-text-row';
+          if(obj.title){ const tn=document.createElement('div'); tn.className='plog-step-title'; tn.textContent=obj.title; tr.appendChild(tn); }
+          if(obj.text){ const td=document.createElement('div'); td.innerHTML=textToDisplay(obj.text); tr.appendChild(td); }
+          plogEl.appendChild(tr);
+        }
+      }
+    }
   }
-  // 全サブタブをまとめて表示してから印刷
-  let combined="";
-  subtabs.forEach((s,idx)=>{
-    data.activeSubtab=s.id;
-    renderContent();
-    const sec=`<div class="print-subtab-section">`
-      +(subtabs.length>1?`<div class="print-subtab-title">${escapeHtml(s.name)}</div>`:"")
-      +container.innerHTML
-      +`</div>`;
-    combined+=sec;
-  });
-  container.innerHTML=combined;
+
+  document.body.setAttribute('data-plog','1');
   window.print();
-  $("printDateBar").innerHTML="";
-  // 元に戻す
-  data.activeSubtab=origSubtab;
-  renderContent();
+  document.body.removeAttribute('data-plog');
+  plogEl.innerHTML='';
+}
+
+$("miPrint").onclick=async()=>{
+  const p=curProcess();
+  if(!p){ toast("手順がありません"); return; }
+  if(!confirm(`「${p.name}」を工事写真帳形式で印刷しますか？`)) return;
+  hideSheets();
+  await printPhotoLog(p);
 };
 
 $("miPptxExport").onclick=async()=>{
