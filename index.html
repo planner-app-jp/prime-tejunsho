@@ -984,6 +984,7 @@ function idbAllPhotos(){
    状態
    ============================================================ */
 let data=null;          // {version, processes:[...], activeProcess, activeSubtab}
+let dataModule=null;     // dataが属するモジュールキー（ホーム画面でも正しいkeyを保持）
 let photoCache={};       // photoId -> dataURL
 let editMode=false;
 const checkState={};    // checkState[subtabId][itemId] = true/false
@@ -2820,7 +2821,7 @@ $("miExport").onclick=async ()=>{
   hideSheets();
   toast("書き出し中…");
   const photos=await idbAllPhotos();
-  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:currentModule, homeApps, builtinOverrides, homeBuiltins, data, photos };
+  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:dataModule||currentModule, homeApps, builtinOverrides, homeBuiltins, data, photos };
   const fname=`手順書_${todayStr().replace(/\//g,"")}.json`;
   const blob=new Blob([JSON.stringify(bundle)],{type:"application/json"});
   if(choice==="share" && navigator.share){
@@ -2870,10 +2871,12 @@ $("importInput").addEventListener("change",async e=>{
       await idbSet("meta","builtinOverrides",builtinOverrides);
     }
     // データを正しいアプリキーへ復元
-    const restoreKey=bundle.targetModule||currentModule;
+    // targetModuleがない古いバックアップはhomeAppsの最初のアプリをフォールバックに使う
+    const restoreKey=bundle.targetModule||currentModule||(bundle.homeApps&&bundle.homeApps[0]?.key)||null;
     const restoreCfg=getModuleConfig(restoreKey);
     const restoreDataKey=restoreCfg?.dataKey||"data";
     data=bundle.data;
+    dataModule=restoreKey;
     await idbSet("meta",restoreDataKey,data);
     if(restoreKey&&restoreKey===currentModule){
       renderAll();
@@ -3043,6 +3046,7 @@ async function openModule(key){
     (d.processes||[]).forEach(p=>(p.subtabs||[]).forEach(s=>(s.steps||[]).forEach(st=>{ if(!st.subSteps) st.subSteps=[]; })));
     await idbSet("meta",mod.dataKey,d);
   }
+  dataModule=key;
   data=d;
   photoCache=await idbAllPhotos();
   renderAll();
