@@ -1,6 +1,6 @@
-const CACHE="prime-manual-v20";
-// index.htmlはキャッシュしない（更新時に古いコードが残るのを防ぐ）
-const ASSETS=["./manifest.json","./icon.jpg"];
+const CACHE="prime-manual-v22";
+// index.htmlはネットワーク優先だが、成功時にコピーを保存しサーバー停止中も開けるようにする
+const ASSETS=["./index.html","./manifest.json","./icon.jpg"];
 
 self.addEventListener("install",e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
@@ -11,10 +11,15 @@ self.addEventListener("activate",e=>{
 self.addEventListener("fetch",e=>{
   if(e.request.method!=="GET") return;
   if(e.request.url.includes("sw.js")) return;
-  // index.htmlは常にネットワークから取得（キャッシュしない）
+  // index.htmlはネットワーク優先、成功時にコピー保存、失敗時(サーバー停止中)はキャッシュ
   const url=new URL(e.request.url);
   if(url.pathname==="/"||url.pathname.endsWith("index.html")){
-    e.respondWith(fetch(e.request).catch(()=>caches.match("./index.html")));
+    e.respondWith(
+      fetch(e.request).then(res=>{
+        if(res.ok){const copy=res.clone();caches.open(CACHE).then(c=>c.put("./index.html",copy)).catch(()=>{});}
+        return res;
+      }).catch(()=>caches.match("./index.html"))
+    );
     return;
   }
   // その他のファイルはキャッシュ優先

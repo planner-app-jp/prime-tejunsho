@@ -880,14 +880,14 @@
 /* ドメイン制限 */
 (function(){
   const h=location.hostname;
-  const ok=h==="planner-app-jp.github.io"||h==="localhost"||h.startsWith("192.168.");
+  const ok=h==="planner-app-jp.github.io"||h==="tejunsho-app-10e0.pages.dev"||h==="macbook-air.local"||h==="localhost"||h.startsWith("192.168.");
   if(!ok){
     document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;font-family:sans-serif;color:#444;padding:24px;text-align:center;"><p style="font-size:20px;font-weight:700;">⚠️ アクセス不可</p><p style="font-size:14px;">このアプリは許可されたURLでのみ使用できます。</p></div>';
     throw new Error("Unauthorized domain");
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v4";
+const APP_VERSION = "v5";
 
 /* ============================================================
    モジュール定義
@@ -2821,7 +2821,11 @@ $("miExport").onclick=async ()=>{
   hideSheets();
   toast("書き出し中…");
   const photos=await idbAllPhotos();
-  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:dataModule||currentModule, homeApps, builtinOverrides, homeBuiltins, data, photos };
+  // 全モジュール（ビルトイン＋カスタムアプリ）のデータをまとめて書き出す
+  const allData={};
+  const dataKeys=["data","manual_data",...homeApps.map(a=>`cust_${a.key}`)];
+  for(const dk of dataKeys){ try{ const v=await idbGet("meta",dk); if(v) allData[dk]=v; }catch(e){} }
+  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:dataModule||currentModule, homeApps, builtinOverrides, homeBuiltins, data, photos, allData };
   const fname=`手順書_${todayStr().replace(/\//g,"")}.json`;
   const blob=new Blob([JSON.stringify(bundle)],{type:"application/json"});
   if(choice==="share" && navigator.share){
@@ -2869,6 +2873,14 @@ $("importInput").addEventListener("change",async e=>{
     if(bundle.builtinOverrides){
       builtinOverrides=bundle.builtinOverrides;
       await idbSet("meta","builtinOverrides",builtinOverrides);
+    }
+    // 新形式(allData)なら全モジュールのデータをまとめて復元
+    if(bundle.allData&&typeof bundle.allData==="object"&&Object.keys(bundle.allData).length){
+      for(const dk in bundle.allData){ await idbSet("meta",dk,bundle.allData[dk]); }
+      data=null; dataModule=null;
+      showHome();
+      toast("読み込みました（全アプリ復元）");
+      return;
     }
     // データを正しいアプリキーへ復元
     // targetModuleがない古いバックアップはhomeAppsの最初のアプリをフォールバックに使う
