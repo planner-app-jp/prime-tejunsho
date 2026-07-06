@@ -520,7 +520,7 @@
     body[data-plog] #plogContainer{display:block!important;
       /* 常にA4幅でレイアウトを組む: スマホ印刷(画面幅で組んで縮小)でも
          パソコンと同じ横幅配分・見た目になる */
-      width:194mm!important; margin:0 auto!important;}
+      width:202mm!important; margin:0 auto!important;}
     /* 余白を全辺0にするとブラウザのヘッダー/フッター(URL・日付・ページ番号)が印刷されない。
        紙の端との余白はbodyのpaddingで確保する */
     @page { size: A4 portrait; margin: 0; }
@@ -528,7 +528,7 @@
 
     /* bodyリセット */
     html,body { overflow:visible!important; height:auto!important; background:white!important;
-      padding:6mm 7mm 8mm!important; }
+      padding:5mm 4mm 6mm!important; }
 
     /* UI要素を非表示 */
     header, #tabbar, #subtabbar, #homeScreen,
@@ -912,7 +912,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v33";
+const APP_VERSION = "v34";
 
 /* ============================================================
    モジュール定義
