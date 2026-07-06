@@ -481,9 +481,9 @@
 
   /* ===== 工事写真帳スタイル ===== */
   #plogContainer{display:none;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;}
-  .plog-title-bar{font-size:13.5pt;font-weight:700;text-align:center;padding:0 0 3mm;border-bottom:1.5pt solid #333;margin-bottom:4mm;display:flex;justify-content:space-between;align-items:baseline;}
-  .plog-title-name{font-size:13.5pt;font-weight:700;}
-  .plog-title-date{font-size:9pt;font-weight:400;color:#555;}
+  .plog-title-bar{display:block;text-align:center;padding:0 0 3mm;border-bottom:1.5pt solid #333;margin-bottom:4mm;}
+  .plog-title-name{display:block;font-size:22pt;font-weight:700;letter-spacing:.04em;}
+  .plog-title-date{display:block;font-size:9pt;font-weight:400;color:#555;margin-top:1mm;}
   .plog-subtab-header{font-size:11pt;font-weight:700;background:#eef2f7;padding:2mm 3mm;margin:3mm 0 2mm;border-left:3pt solid #1f6feb;}
   /* ===== 表形式印刷(案A: 作業標準書スタイル) ===== */
   .pst{width:100%;border-collapse:collapse;margin-bottom:4mm;}
@@ -912,7 +912,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v36";
+const APP_VERSION = "v37";
 
 /* ============================================================
    モジュール定義
