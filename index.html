@@ -909,7 +909,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v30";
+const APP_VERSION = "v31";
 
 /* ============================================================
    モジュール定義
@@ -3338,9 +3338,17 @@ async function printPhotoLog(p){
   }
 
   document.body.setAttribute('data-plog','1');
+  // 片付けは「印刷が終わってから」行う。
+  // iPhone/iPadはwindow.print()がプレビュー表示を待たずに戻ってくるため、
+  // 直後に片付けると表形式が消えて通常レイアウトが印刷されてしまう。
+  const cleanup=()=>{
+    document.body.removeAttribute('data-plog');
+    plogEl.innerHTML='';
+    window.removeEventListener('afterprint',cleanup);
+  };
+  window.addEventListener('afterprint',cleanup);
+  setTimeout(cleanup, 120000); // afterprintが来ない環境用の保険(画面表示には影響なし)
   window.print();
-  document.body.removeAttribute('data-plog');
-  plogEl.innerHTML='';
 }
 
 $("miPrint").onclick=async()=>{
