@@ -912,7 +912,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v35";
+const APP_VERSION = "v36";
 
 /* ============================================================
    モジュール定義
@@ -3202,6 +3202,7 @@ $("miExcelExport").onclick=async()=>{
 
 // canvasにアノテーションを描く共通関数
 function drawAnnosOnCanvas(ctx,annotations,iw,ih){
+  // 編集画面と同じく (x,y) は「記号の中心」。左上基準で描くと半サイズ右下にずれるので注意
   const base=Math.min(iw,ih);
   annotations.forEach(a=>{
     const x=a.x/100*iw, y=a.y/100*ih;
@@ -3210,25 +3211,27 @@ function drawAnnosOnCanvas(ctx,annotations,iw,ih){
     ctx.save(); ctx.fillStyle=col; ctx.strokeStyle=col;
     if(a.type==='circle'){
       ctx.lineWidth=Math.max(2,base*0.006);
-      ctx.beginPath(); ctx.arc(x+sizePx/2,y+sizePx/2,sizePx/2,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x,y,sizePx/2,0,Math.PI*2); ctx.stroke();
     } else if(a.type==='num'){
-      ctx.beginPath(); ctx.arc(x+sizePx/2,y+sizePx/2,sizePx/2,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,sizePx/2,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='#fff'; ctx.font=`bold ${sizePx*0.6}px sans-serif`;
       ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(a.text||'',x+sizePx/2,y+sizePx/2);
+      ctx.fillText(a.text||'',x,y);
     } else if(a.type==='text'){
       ctx.font=`bold ${sizePx}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,sizePx*0.12);
-      ctx.strokeText(a.text||'',x,y+sizePx); ctx.fillText(a.text||'',x,y+sizePx);
+      ctx.strokeText(a.text||'',x,y); ctx.fillText(a.text||'',x,y);
     } else if(a.type==='arrow'){
       ctx.font=`${sizePx*1.4}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,sizePx*0.1);
-      ctx.strokeText('➜',x,y+sizePx*1.4); ctx.fillText('➜',x,y+sizePx*1.4);
+      ctx.strokeText('➜',x,y); ctx.fillText('➜',x,y);
     } else if(a.type==='rect'){
       const wPx=Math.max(20,(a.size/100)*iw);
       const hPx=Math.max(10,wPx*0.6*(a.hRatio||1));
       ctx.lineWidth=Math.max(2,base*0.005);
-      ctx.strokeRect(x,y,wPx,hPx);
+      ctx.strokeRect(x-wPx/2,y-hPx/2,wPx,hPx);
     }
     ctx.restore();
   });
