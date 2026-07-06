@@ -873,7 +873,7 @@
   <div class="crop-hint">枠をドラッグして範囲を調整</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="./exceljs.min.js"></script>
 <script>
 (function(){
 "use strict";
@@ -3510,7 +3510,7 @@ async function exportToPptx(proc,sub,mod){
     if(typeof PptxGenJS==='undefined'){
       await new Promise((res,rej)=>{
         const s=document.createElement('script');
-        s.src='https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+        s.src='./pptxgen.bundle.js';
         s.onload=res; s.onerror=()=>rej(new Error('ライブラリの読み込みに失敗'));
         document.head.appendChild(s);
       });
