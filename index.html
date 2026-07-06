@@ -496,8 +496,10 @@
   .pst .pst-subpic{margin-top:1.5mm;}
   .pst .pst-subpic-cap{font-size:7.5pt;color:#555;text-align:right;line-height:1.2;}
   .pst .pst-title{font-weight:700;margin-bottom:1mm;}
-  .pst .pst-sub{margin-top:1.5mm;padding-left:2mm;border-left:1.5pt solid #111;font-size:9pt;}
-  .pst .pst-sub-no{font-weight:700;margin-right:1.5mm;border:0.5pt solid #999;border-radius:2mm;padding:0 1.2mm;font-size:8pt;white-space:nowrap;}
+  .pst .pst-sub{margin-top:1.5mm;padding-left:2mm;border-left:1.5pt solid #111;font-size:9pt;
+    display:flex;gap:1.5mm;align-items:flex-start;}
+  .pst .pst-sub>span:last-child{flex:1;min-width:0;}
+  .pst .pst-sub-no{font-weight:700;border:0.5pt solid #999;border-radius:2mm;padding:0 1.2mm;font-size:8pt;white-space:nowrap;flex-shrink:0;margin-top:0.3mm;}
   .plog-row{display:flex;break-inside:avoid;page-break-inside:avoid;margin-bottom:1mm;border:0.5pt solid #777;}
   .plog-img-col{flex:0 0 58%;border-right:0.5pt solid #777;overflow:hidden;background:#f8f8f8;}
   .plog-img{display:block;width:100%;height:auto;}
@@ -913,7 +915,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v45";
+const APP_VERSION = "v46";
 
 /* ============================================================
    モジュール定義
