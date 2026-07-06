@@ -574,8 +574,8 @@
     #printDateBar .ph-title { font-size:17px; font-weight:700; color:#1f2937; }
     #printDateBar .ph-date { font-size:11px; color:#555; }
     /* 写真 — object-fit:noneにしてレターボックスを排除（アノテーション位置ズレ防止） */
-    .step-photo { width:100%!important; height:auto!important; max-height:none!important; object-fit:none!important; }
-    .step-thumb { width:130px!important; height:auto!important; max-height:none!important; object-fit:none!important; }
+    .step-photo { width:100%!important; height:auto!important; max-height:none!important; object-fit:contain!important; }
+    .step-thumb { width:130px!important; height:auto!important; max-height:none!important; object-fit:contain!important; }
     .step-media-row { padding:8px 12px 10px!important; }
     .step-body { padding:8px 12px 10px!important; }
     .step-text-view { font-size:13px!important; }
@@ -1608,10 +1608,11 @@ function getContainRect(img){
 function renderAnnotations(layer,annos,img){
   if(!img.clientWidth||!img.naturalWidth){ requestAnimationFrame(()=>renderAnnotations(layer,annos,img)); return; }
   layer.innerHTML="";
+  layer._img=img; layer._annos=annos; // 印刷時の再レイアウト用に保持
   const r=getContainRect(img);
   const cw=img.clientWidth, ch=img.clientHeight;
-  // パーセント指定で印刷時も正しくスケールする
-  layer.style.cssText=`position:absolute;left:${r.x/cw*100}%;top:${r.y/ch*100}%;width:${r.w/cw*100}%;height:${r.h/ch*100}%;pointer-events:none;`;
+  // パーセント指定+コンテナ単位で印刷時も正しくスケールする
+  layer.style.cssText=`position:absolute;left:${r.x/cw*100}%;top:${r.y/ch*100}%;width:${r.w/cw*100}%;height:${r.h/ch*100}%;pointer-events:none;container-type:size;`;
   (annos||[]).forEach(a=>{
     const el=document.createElement("div");
     el.className="anno-mark "+a.type;
@@ -1619,6 +1620,27 @@ function renderAnnotations(layer,annos,img){
     layer.appendChild(el);
   });
 }
+
+/* 印刷時: 画面の余白(レターボックス)を前提にしたレイヤー位置を、
+   印刷レイアウト(余白なし・画像=枠ぴったり)用に切り替える */
+function relayoutAnnoLayers(printMode){
+  document.querySelectorAll(".anno-layer").forEach(layer=>{
+    const img=layer._img;
+    if(!img || !img.isConnected) return;
+    if(printMode){
+      layer.style.left="0"; layer.style.top="0";
+      layer.style.width="100%"; layer.style.height="100%";
+    } else {
+      if(!img.clientWidth||!img.naturalWidth) return;
+      const r=getContainRect(img);
+      const cw=img.clientWidth, ch=img.clientHeight;
+      layer.style.left=(r.x/cw*100)+"%"; layer.style.top=(r.y/ch*100)+"%";
+      layer.style.width=(r.w/cw*100)+"%"; layer.style.height=(r.h/ch*100)+"%";
+    }
+  });
+}
+window.addEventListener("beforeprint",()=>relayoutAnnoLayers(true));
+window.addEventListener("afterprint",()=>relayoutAnnoLayers(false));
 
 // 軽量：日付だけ更新したいとき全描画を避ける
 function renderContentDateOnly(){ /* no-op：onchangeで十分 */ }
@@ -2158,30 +2180,31 @@ function placeMark(el,a,iw,ih,interactive){
       el.style.borderColor=c;
     }
   } else {
-    // 表示/印刷モード：パーセント指定でスケールに追従
+    // 表示/印刷モード：パーセント+コンテナ単位(cqmin)でスケールに完全追従
     const sWPct=Math.max(2,sizePx/iw*100);
     const sHPct=Math.max(2,sizePx/ih*100);
-    const bwPct=Math.max(0.3,base*0.006/iw*100);
+    const sizeCq=sizePx/base*100;      // 画像の短辺に対する割合
+    const bwCq=Math.max(0.4,0.6);      // 枠線: 短辺の0.6%
+    const setFont=(px,cq)=>{ el.style.fontSize=px+"px"; el.style.fontSize=cq+"cqmin"; };
+    const setBorder=()=>{ el.style.borderWidth=Math.max(2,base*0.006)+"px"; el.style.borderWidth=bwCq+"cqmin"; el.style.borderColor=c; };
     if(a.type==="circle"){
       el.style.width=sWPct+"%"; el.style.height=sHPct+"%";
-      el.style.borderWidth=bwPct+"%";
-      el.style.borderColor=c;
+      setBorder();
     } else if(a.type==="num"){
       el.style.width=sWPct+"%"; el.style.height=sHPct+"%";
-      el.style.fontSize=(sizePx*0.55)+"px"; el.textContent=a.text||"";
+      setFont(sizePx*0.55, sizeCq*0.55); el.textContent=a.text||"";
       el.style.background=c;
     } else if(a.type==="text"){
-      el.style.fontSize=sizePx+"px"; el.textContent=a.text||"";
+      setFont(sizePx, sizeCq); el.textContent=a.text||"";
       el.style.color=c;
     } else if(a.type==="arrow"){
-      el.style.fontSize=(sizePx*1.4)+"px"; el.textContent="➜";
+      setFont(sizePx*1.4, sizeCq*1.4); el.textContent="➜";
       el.style.color=c;
     } else if(a.type==="rect"){
       const rWPct=Math.max(5,(a.size/100)*100);
       const rHPct=Math.max(3,rWPct*0.6*(a.hRatio||1)*iw/ih);
       el.style.width=rWPct+"%"; el.style.height=rHPct+"%";
-      el.style.borderWidth=bwPct+"%";
-      el.style.borderColor=c;
+      setBorder();
     }
   }
 }
