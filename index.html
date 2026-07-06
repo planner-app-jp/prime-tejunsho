@@ -913,7 +913,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v42";
+const APP_VERSION = "v43";
 
 /* ============================================================
    モジュール定義
@@ -3279,7 +3279,7 @@ async function buildPrintDom(p, inputDate){
   const appName=$("appTitle").textContent||"手順書";
   const els=[];
   const tbar=document.createElement('div'); tbar.className='plog-title-bar';
-  tbar.innerHTML=`<span class="plog-title-name">${escapeHtml(p.name)}</span><span class="plog-title-date">${escapeHtml(appName)}　更新日：${escapeHtml(inputDate)}</span>`;
+  tbar.innerHTML=`<span class="plog-title-name">${escapeHtml(p.name)}</span><span class="plog-title-date">更新日：${escapeHtml(inputDate)}</span>`;
   els.push(tbar);
 
   const subtabs=p.subtabs||[];
