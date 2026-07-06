@@ -1,4 +1,4 @@
-const CACHE="prime-manual-v26";
+const CACHE="prime-manual-v27";
 const ASSETS=["./manifest.json","./icon.jpg"];
 
 // リダイレクト情報を取り除いた素のレスポンスに変換して保存する
