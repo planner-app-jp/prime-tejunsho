@@ -728,6 +728,7 @@
     <div class="sheet-grip"></div>
     <div class="sheet-head"><h3>メニュー</h3><button class="close" data-close>×</button></div>
     <button class="menu-item" id="miPrint" style="display:none;"><span class="ic">🖨️</span><span>印刷する／レイアウト確認<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">手順書を印刷、またはレイアウトを事前確認できます</span></span></button>
+    <button class="menu-item" id="miPdfExport" style="display:none;"><span class="ic">📄</span><span>PDFに保存・共有<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">URL・日付なしのA4 PDFを作成。スマホからの印刷におすすめ</span></span></button>
     <button class="menu-item" id="miExport"><span class="ic">💾</span><span>データを保存する<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">全工程をJSONで書き出し。バックアップや機種変更のときに使う</span></span></button>
     <div class="menu-section-lbl">インポート</div>
     <button class="menu-item" id="miMerge"><span class="ic">➕</span><span>工程を追加する<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">受け取ったJSONを追加。今のデータはそのまま残る</span></span></button>
@@ -912,7 +913,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v38";
+const APP_VERSION = "v39";
 
 /* ============================================================
    モジュール定義
@@ -3090,6 +3091,7 @@ async function openModule(key){
   $("menuBtn").style.display="";
   $("appTitle").textContent=mod.title;
   $("miPrint").style.display=mod.hasExcel?"":"none";
+  $("miPdfExport").style.display=mod.hasExcel?"":"none";
   $("miPcEditHeader").style.display=mod.hasExcel?"":"none";
   $("miExcelExport").style.display=mod.hasExcel?"":"none";
   $("miPptxExport").style.display=mod.hasExcel?"":"none";
@@ -3272,25 +3274,19 @@ async function getPhotoWithAnnos(photoId,annotations){
   }
 }
 
-// 表形式(作業標準書スタイル)で印刷 — No|写真|手順内容 の罫線表で用紙を節約
-async function printPhotoLog(p){
-  const defaultDate=fmtDate(p.updatedAt||data.updatedAt);
-  const inputDate=prompt("更新日を入力してください（変更可）",defaultDate);
-  if(inputDate===null) return;
+// 表形式(作業標準書スタイル)のDOM部品を生成 — 印刷とPDF出力で共用
+async function buildPrintDom(p, inputDate){
   const appName=$("appTitle").textContent||"手順書";
-  const plogEl=$("plogContainer");
-  plogEl.innerHTML='';
-
-  // タイトルバー
+  const els=[];
   const tbar=document.createElement('div'); tbar.className='plog-title-bar';
-  tbar.innerHTML=`<span class="plog-title-name">${escapeHtml(p.name)}</span><span class="plog-title-date">${escapeHtml(appName)}　更新日：${escapeHtml(inputDate||defaultDate)}</span>`;
-  plogEl.appendChild(tbar);
+  tbar.innerHTML=`<span class="plog-title-name">${escapeHtml(p.name)}</span><span class="plog-title-date">${escapeHtml(appName)}　更新日：${escapeHtml(inputDate)}</span>`;
+  els.push(tbar);
 
   const subtabs=p.subtabs||[];
   for(const s of subtabs){
     if(subtabs.length>1){
       const sh=document.createElement('div'); sh.className='plog-subtab-header';
-      sh.textContent=s.name||''; plogEl.appendChild(sh);
+      sh.textContent=s.name||''; els.push(sh);
     }
     const table=document.createElement('table'); table.className='pst';
     table.innerHTML='<thead><tr><th class="pst-no">No</th><th class="pst-pic">写真</th><th>内容</th></tr></thead>';
@@ -3302,15 +3298,12 @@ async function printPhotoLog(p){
       const tdNo=document.createElement('td'); tdNo.className='pst-no'; tdNo.textContent=no;
       const tdPic=document.createElement('td'); tdPic.className='pst-pic';
       const tdTxt=document.createElement('td'); tdTxt.className='pst-txt';
-      // メイン写真(記号焼き込み済み)
       if(st.photoId&&photoCache[st.photoId]){
         const src=await getPhotoWithAnnos(st.photoId,st.annotations||[]);
         if(src){ const im=document.createElement('img'); im.src=src; tdPic.appendChild(im); }
       }
-      // タイトル・本文
       if(st.title){ const t=document.createElement('div'); t.className='pst-title'; t.textContent=st.title; tdTxt.appendChild(t); }
       if(st.text){ const t=document.createElement('div'); t.innerHTML=textToDisplay(st.text); tdTxt.appendChild(t); }
-      // サブ手順(本文は内容セル・写真は写真セルに番号付きで)
       let si=0;
       for(const ss of (st.subSteps||[])){
         si++;
@@ -3340,21 +3333,147 @@ async function printPhotoLog(p){
       tbody.appendChild(tr);
     }
     table.appendChild(tbody);
-    plogEl.appendChild(table);
+    els.push(table);
   }
+  return els;
+}
+
+// 表形式で印刷(ブラウザの印刷機能)
+async function printPhotoLog(p){
+  const defaultDate=fmtDate(p.updatedAt||data.updatedAt);
+  const inputDate=prompt("更新日を入力してください（変更可）",defaultDate);
+  if(inputDate===null) return;
+  const plogEl=$("plogContainer");
+  plogEl.innerHTML='';
+  const els=await buildPrintDom(p, inputDate||defaultDate);
+  els.forEach(el=>plogEl.appendChild(el));
 
   document.body.setAttribute('data-plog','1');
-  // 片付けは「印刷が終わってから」行う。
-  // iPhone/iPadはwindow.print()がプレビュー表示を待たずに戻ってくるため、
-  // 直後に片付けると表形式が消えて通常レイアウトが印刷されてしまう。
+  // 片付けは「印刷が終わってから」(iPhoneはprint()が即戻るため)
   const cleanup=()=>{
     document.body.removeAttribute('data-plog');
     plogEl.innerHTML='';
     window.removeEventListener('afterprint',cleanup);
   };
   window.addEventListener('afterprint',cleanup);
-  setTimeout(cleanup, 120000); // afterprintが来ない環境用の保険(画面表示には影響なし)
+  setTimeout(cleanup, 120000);
   window.print();
+}
+
+/* ===== PDF出力(iPhoneからでもURL・日付なしのきれいな印刷ができる) ===== */
+function loadScriptOnce(src){
+  return new Promise((res,rej)=>{
+    const sc=document.createElement('script'); sc.src=src;
+    sc.onload=res; sc.onerror=()=>rej(new Error(src+" の読み込みに失敗"));
+    document.head.appendChild(sc);
+  });
+}
+async function loadPdfLibs(){
+  if(typeof html2canvas==='undefined') await loadScriptOnce('./html2canvas.min.js');
+  if(!(window.jspdf&&window.jspdf.jsPDF)) await loadScriptOnce('./jspdf.umd.min.js');
+}
+
+async function exportPdf(p){
+  const defaultDate=fmtDate(p.updatedAt||data.updatedAt);
+  const inputDate=prompt("更新日を入力してください（変更可）",defaultDate);
+  if(inputDate===null) return;
+  toast("PDFを作成中…しばらくお待ちください");
+  let host=null;
+  try{
+    await loadPdfLibs();
+    const els=await buildPrintDom(p, inputDate||defaultDate);
+
+    // A4(96dpi=794×1123px)のページに行単位で詰めていく
+    const PAGE_W=794, PAGE_H=1123, PAD=22;
+    host=document.createElement('div');
+    host.style.cssText='position:fixed;left:-12000px;top:0;background:#fff;';
+    document.body.appendChild(host);
+    const pages=[];
+    let content=null;
+    const newPage=()=>{
+      const page=document.createElement('div');
+      page.style.cssText=`width:${PAGE_W}px;height:${PAGE_H}px;background:#fff;box-sizing:border-box;padding:${PAD}px;overflow:hidden;`;
+      content=document.createElement('div');
+      page.appendChild(content); host.appendChild(page); pages.push(page);
+    };
+    const fits=()=>content.scrollHeight<=PAGE_H-PAD*2;
+    newPage();
+    for(const el of els){
+      if(el.tagName==='TABLE'){
+        const thead=el.querySelector('thead');
+        const rows=[...el.querySelectorAll('tbody tr')];
+        let t=el.cloneNode(false); t.appendChild(thead.cloneNode(true));
+        let tb=document.createElement('tbody'); t.appendChild(tb);
+        content.appendChild(t);
+        if(!fits()){ t.remove(); newPage(); content.appendChild(t); }
+        for(const row of rows){
+          tb.appendChild(row);
+          if(!fits()){
+            row.remove();
+            newPage();
+            t=el.cloneNode(false); t.appendChild(thead.cloneNode(true));
+            tb=document.createElement('tbody'); t.appendChild(tb);
+            content.appendChild(t);
+            tb.appendChild(row);
+          }
+        }
+      } else {
+        content.appendChild(el);
+        if(!fits()){ el.remove(); newPage(); content.appendChild(el); }
+      }
+    }
+    // 画像の読み込み待ち
+    await Promise.all([...host.querySelectorAll('img')].map(im=>im.complete?null:new Promise(r=>{im.onload=r; im.onerror=r;})));
+
+    const { jsPDF }=window.jspdf;
+    const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+    for(let i=0;i<pages.length;i++){
+      const canvas=await html2canvas(pages[i],{scale:2,backgroundColor:'#ffffff',logging:false});
+      if(i>0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.9),'JPEG',0,0,210,297);
+    }
+    host.remove(); host=null;
+
+    const blob=pdf.output('blob');
+    const fname=(p.name||'手順書')+'.pdf';
+    showPdfSheet(blob,fname,pages.length);
+  }catch(err){
+    if(host) host.remove();
+    toast("PDF作成に失敗: "+err.message);
+  }
+}
+
+// 生成後の共有/保存シート(iPhoneのシェアはユーザー操作直後でないと動かないため、ボタンを挟む)
+function showPdfSheet(blob,fname,pageCount){
+  const old=$("pdfSheetOverlay"); if(old) old.remove();
+  const ov=document.createElement('div');
+  ov.id='pdfSheetOverlay';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  const canShare=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],fname,{type:'application/pdf'})]}));
+  ov.innerHTML=`<div style="background:#fff;width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px 16px 32px;">
+    <p style="font-weight:700;font-size:16px;margin:0 0 4px;">📄 PDFができました（全${pageCount}ページ）</p>
+    <p style="font-size:12px;color:#64748b;margin:0 0 14px;">URL・日付は入っていません。共有からエプソンのアプリやプリンタに送れます。</p>
+    ${canShare?'<button id="_pdfShare" style="width:100%;margin-bottom:10px;padding:14px;border-radius:10px;background:#1d4ed8;color:#fff;border:none;font-size:15px;font-weight:700;">📤 共有する（印刷・保存）</button>':''}
+    <button id="_pdfSave" style="width:100%;margin-bottom:10px;padding:14px;border-radius:10px;background:#f1f5f9;color:#1f2937;border:none;font-size:15px;font-weight:700;">💾 ファイルとして保存</button>
+    <button id="_pdfCancel" style="width:100%;padding:12px;border-radius:10px;background:#fff;color:#64748b;border:1px solid #e2e8f0;font-size:15px;">閉じる</button>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+  const sh=$("_pdfShare");
+  if(sh) sh.onclick=async()=>{
+    try{
+      await navigator.share({files:[new File([blob],fname,{type:'application/pdf'})],title:fname});
+      close();
+    }catch(e){ if(e.name!=='AbortError') toast('共有できませんでした'); }
+  };
+  $("_pdfSave").onclick=()=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    close(); toast('PDFを保存しました 📄');
+  };
 }
 
 $("miPrint").onclick=async()=>{
@@ -3363,6 +3482,12 @@ $("miPrint").onclick=async()=>{
   if(!confirm(`「${p.name}」を表形式で印刷しますか？`)) return;
   hideSheets();
   await printPhotoLog(p);
+};
+$("miPdfExport").onclick=async()=>{
+  const p=curProcess();
+  if(!p){ toast("手順がありません"); return; }
+  hideSheets();
+  await exportPdf(p);
 };
 
 $("miPptxExport").onclick=async()=>{
