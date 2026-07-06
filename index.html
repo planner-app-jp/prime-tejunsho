@@ -483,7 +483,7 @@
   #plogContainer{display:none;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;}
   .plog-title-bar{display:block;text-align:center;padding:0 0 3mm;border-bottom:1.5pt solid #333;margin-bottom:4mm;}
   .plog-title-name{display:block;font-size:22pt;font-weight:700;letter-spacing:.04em;}
-  .plog-title-date{display:block;font-size:9pt;font-weight:400;color:#555;margin-top:1mm;}
+  .plog-title-date{display:block;font-size:9pt;font-weight:400;color:#555;margin-top:1mm;text-align:right;}
   .plog-subtab-header{font-size:11pt;font-weight:700;background:#eef2f7;padding:2mm 3mm;margin:3mm 0 2mm;border-left:3pt solid #1f6feb;}
   /* ===== 表形式印刷(案A: 作業標準書スタイル) ===== */
   .pst{width:100%;border-collapse:collapse;margin-bottom:4mm;}
@@ -912,7 +912,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v37";
+const APP_VERSION = "v38";
 
 /* ============================================================
    モジュール定義
@@ -3293,7 +3293,7 @@ async function printPhotoLog(p){
       sh.textContent=s.name||''; plogEl.appendChild(sh);
     }
     const table=document.createElement('table'); table.className='pst';
-    table.innerHTML='<thead><tr><th class="pst-no">No</th><th class="pst-pic">写真</th><th>手順内容</th></tr></thead>';
+    table.innerHTML='<thead><tr><th class="pst-no">No</th><th class="pst-pic">写真</th><th>内容</th></tr></thead>';
     const tbody=document.createElement('tbody');
     let no=0;
     for(const st of (s.steps||[])){
