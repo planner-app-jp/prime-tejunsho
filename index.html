@@ -481,9 +481,9 @@
 
   /* ===== 工事写真帳スタイル ===== */
   #plogContainer{display:none;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;}
-  .plog-title-bar{display:block;text-align:center;padding:0 0 3mm;border-bottom:1pt solid #777;margin-bottom:4mm;}
-  .plog-title-name{display:block;font-size:21pt;font-weight:700;letter-spacing:.06em;}
-  .plog-title-date{display:block;font-size:9pt;font-weight:400;color:#555;margin-top:1mm;text-align:right;}
+  .plog-title-bar{display:block;text-align:center;padding:0 0 1mm;border-bottom:1pt solid #777;margin-bottom:2mm;position:relative;}
+  .plog-title-name{display:block;font-size:16pt;font-weight:700;letter-spacing:.06em;line-height:1.2;}
+  .plog-title-date{display:block;font-size:9pt;font-weight:400;color:#555;margin-top:0;text-align:right;position:absolute;right:0;bottom:1mm;}
   .plog-subtab-header{font-size:11pt;font-weight:700;background:#eef2f7;padding:2mm 3mm;margin:3mm 0 2mm;border-left:3pt solid #1f6feb;}
   /* ===== 表形式印刷(案A: 作業標準書スタイル) ===== */
   .pst{width:100%;border-collapse:collapse;margin-bottom:4mm;}
@@ -493,13 +493,13 @@
   .pst .pst-no{width:9mm;text-align:center;font-weight:700;font-size:14pt;}
   /* 行の高さをA4の1/3に固定(84mm) → 写真3枚でちょうど1ページに収まる */
   .pst .pst-pic{width:85mm;padding:1.2mm;}
-  .pst td.pst-pic{height:84mm;box-sizing:border-box;}
-  .pst .pst-picbox{height:81mm;display:flex;flex-direction:column;gap:1mm;min-height:0;overflow:hidden;}
+  .pst td.pst-pic{height:82mm;box-sizing:border-box;}
+  .pst .pst-picbox{height:79mm;display:flex;flex-direction:column;gap:1mm;min-height:0;overflow:hidden;}
   .pst .pst-picbox img{width:100%;flex:1 1 0;min-height:0;object-fit:contain;display:block;}
   .pst .pst-subpic{flex:1 1 0;min-height:0;display:flex;flex-direction:column;margin-top:0;}
   .pst .pst-subpic-cap{font-size:9pt;color:#555;text-align:right;line-height:1.2;flex:0 0 auto;}
-  .pst td.pst-txt{height:84mm;box-sizing:border-box;}
-  .pst .pst-txtbox{height:79.5mm;overflow:hidden;}
+  .pst td.pst-txt{height:82mm;box-sizing:border-box;}
+  .pst .pst-txtbox{height:77.5mm;overflow:hidden;}
   .pst .pst-title{font-weight:700;margin-bottom:1.5mm;font-size:15pt;}
   .pst .pst-sub{margin-top:2mm;padding-left:2.5mm;border-left:1.5pt solid #111;font-size:11.5pt;
     display:flex;gap:2mm;align-items:flex-start;}
@@ -535,7 +535,7 @@
 
     /* bodyリセット */
     html,body { overflow:visible!important; height:auto!important; background:white!important;
-      padding:4mm 1mm 5mm!important; }
+      padding:2mm 1mm 3mm!important; }
 
     /* UI要素を非表示 */
     header, #tabbar, #subtabbar, #homeScreen,
@@ -920,7 +920,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v48";
+const APP_VERSION = "v49";
 
 /* ============================================================
    モジュール定義
