@@ -923,7 +923,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v52";
+const APP_VERSION = "v53";
 
 /* ============================================================
    モジュール定義
@@ -961,9 +961,9 @@ function getModuleConfig(key){
 }
 
 function seedDataCustom(title){
-  function makeStep(n){ return {id:uid(),text:`手順 ${n}`,note:"",subSteps:[]}; }
+  function makeStep(){ return {id:uid(),text:"",note:"",subSteps:[]}; }
   function makeProc(name){
-    const sub={id:uid(),name:"手順",updatedAt:nowISO(),steps:[makeStep(1),makeStep(2),makeStep(3)]};
+    const sub={id:uid(),name:"手順",updatedAt:nowISO(),steps:[makeStep(),makeStep(),makeStep()]};
     return {id:uid(),name,type:"normal",updatedAt:nowISO(),flow:"",vendorNotes:[],subtabs:[sub],_subId:sub.id};
   }
   const procs=[makeProc(title||"手順"),makeProc("マニュアル"),makeProc("マニュアル"),makeProc("マニュアル")];
