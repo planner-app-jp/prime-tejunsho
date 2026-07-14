@@ -487,24 +487,24 @@
   .plog-subtab-header{font-size:11pt;font-weight:700;background:#eef2f7;padding:2mm 3mm;margin:3mm 0 2mm;border-left:3pt solid #1f6feb;}
   /* ===== 表形式印刷(案A: 作業標準書スタイル) ===== */
   .pst{width:100%;border-collapse:collapse;margin-bottom:4mm;}
-  .pst th{border:0.6pt solid #9aa0a6;font-size:9pt;padding:1.2mm;letter-spacing:.08em;background:#fff;font-weight:700;}
-  .pst td{border:0.6pt solid #9aa0a6;padding:1.5mm 2mm;vertical-align:top;font-size:10pt;line-height:1.55;}
+  .pst th{border:0.6pt solid #9aa0a6;font-size:10pt;padding:1.2mm;letter-spacing:.08em;background:#fff;font-weight:700;}
+  .pst td{border:0.6pt solid #9aa0a6;padding:2mm 2.5mm;vertical-align:top;font-size:13pt;line-height:1.6;}
   .pst tr{break-inside:avoid;page-break-inside:avoid;}
-  .pst .pst-no{width:8mm;text-align:center;font-weight:700;font-size:11pt;}
+  .pst .pst-no{width:9mm;text-align:center;font-weight:700;font-size:14pt;}
   /* 行の高さをA4の1/3に固定(84mm) → 写真3枚でちょうど1ページに収まる */
   .pst .pst-pic{width:85mm;padding:1.2mm;}
   .pst td.pst-pic{height:84mm;box-sizing:border-box;}
-  .pst .pst-picbox{height:100%;display:flex;flex-direction:column;gap:1mm;min-height:0;}
+  .pst .pst-picbox{height:81mm;display:flex;flex-direction:column;gap:1mm;min-height:0;overflow:hidden;}
   .pst .pst-picbox img{width:100%;flex:1 1 0;min-height:0;object-fit:contain;display:block;}
   .pst .pst-subpic{flex:1 1 0;min-height:0;display:flex;flex-direction:column;margin-top:0;}
-  .pst .pst-subpic-cap{font-size:7.5pt;color:#555;text-align:right;line-height:1.2;flex:0 0 auto;}
+  .pst .pst-subpic-cap{font-size:9pt;color:#555;text-align:right;line-height:1.2;flex:0 0 auto;}
   .pst td.pst-txt{height:84mm;box-sizing:border-box;}
-  .pst .pst-txtbox{height:100%;overflow:hidden;}
-  .pst .pst-title{font-weight:700;margin-bottom:1mm;}
-  .pst .pst-sub{margin-top:1.5mm;padding-left:2mm;border-left:1.5pt solid #111;font-size:9pt;
-    display:flex;gap:1.5mm;align-items:flex-start;}
+  .pst .pst-txtbox{height:79.5mm;overflow:hidden;}
+  .pst .pst-title{font-weight:700;margin-bottom:1.5mm;font-size:15pt;}
+  .pst .pst-sub{margin-top:2mm;padding-left:2.5mm;border-left:1.5pt solid #111;font-size:11.5pt;
+    display:flex;gap:2mm;align-items:flex-start;}
   .pst .pst-sub>span:last-child{flex:1;min-width:0;}
-  .pst .pst-sub-no{font-weight:700;border:0.5pt solid #999;border-radius:2mm;padding:0 1.2mm;font-size:8pt;white-space:nowrap;flex-shrink:0;margin-top:0.3mm;}
+  .pst .pst-sub-no{font-weight:700;border:0.5pt solid #999;border-radius:2mm;padding:0 1.5mm;font-size:10pt;white-space:nowrap;flex-shrink:0;margin-top:0.5mm;}
   .plog-row{display:flex;break-inside:avoid;page-break-inside:avoid;margin-bottom:1mm;border:0.5pt solid #777;}
   .plog-img-col{flex:0 0 58%;border-right:0.5pt solid #777;overflow:hidden;background:#f8f8f8;}
   .plog-img{display:block;width:100%;height:auto;}
@@ -920,7 +920,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v47";
+const APP_VERSION = "v48";
 
 /* ============================================================
    モジュール定義
