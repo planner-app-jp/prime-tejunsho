@@ -487,6 +487,7 @@
   .plog-title-bar{display:block;text-align:center;padding:1.5mm 0 2mm;border-bottom:1pt solid #777;margin-bottom:4mm;position:relative;}
   .plog-title-name{display:block;font-size:16pt;font-weight:700;letter-spacing:.06em;line-height:1.2;}
   .plog-title-date{display:block;font-size:9pt;font-weight:400;color:#555;margin-top:0;text-align:right;position:absolute;right:0;bottom:1mm;}
+  .pst-pagewrap{break-inside:avoid;page-break-inside:avoid;}
   /* thead内タイトル行(全ページに再掲・上に余白/表とは詰める) */
   .pst th.pst-title-cell{border:none;background:#fff;padding:5mm 0 1mm;position:relative;text-align:center;}
   .pst .pst-doc-title{font-size:16pt;font-weight:700;letter-spacing:.06em;line-height:1.2;}
@@ -927,7 +928,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v56";
+const APP_VERSION = "v57";
 
 /* ============================================================
    モジュール定義
@@ -3355,19 +3356,21 @@ async function buildPrintDom(p, inputDate){
     }
     // 3手順ごとに表を分割して明示的に改ページ
     // (iOSのブラウザ印刷はtrのbreak-inside:avoidを無視して行を途中で切るため)
+    // 表をdivで包む: 改ページ指定はdiv側に付ける(iOSはtableへのpage-breakを無視するため)
     const makeTable=()=>{
       const t=document.createElement('table'); t.className='pst';
       t.innerHTML=`<thead>${titleRow}<tr><th class="pst-no">No</th><th class="pst-pic">写真</th><th>内容</th></tr></thead>`;
       const tb=document.createElement('tbody');
       t.appendChild(tb);
-      return {t,tb};
+      const wrap=document.createElement('div'); wrap.className='pst-pagewrap'; wrap.appendChild(t);
+      return {t,tb,wrap};
     };
     let cur=makeTable();
-    els.push(cur.t);
+    els.push(cur.wrap);
     const tbodyOf=()=>cur.tb;
     let no=0;
     for(const st of (s.steps||[])){
-      if(no>0 && no%3===0){ cur=makeTable(); els.push(cur.t); }
+      if(no>0 && no%3===0){ cur=makeTable(); els.push(cur.wrap); }
       no++;
       const tbody=tbodyOf();
       const tr=document.createElement('tr');
@@ -3418,7 +3421,7 @@ async function buildPrintDom(p, inputDate){
       if(!firstBlock){ el.style.breakBefore='page'; el.style.pageBreakBefore='always'; }
       afterHeader=true; firstBlock=false; continue;
     }
-    if(el.tagName==='TABLE'){
+    if(el.classList&&el.classList.contains('pst-pagewrap')){
       if(!firstBlock&&!afterHeader){ el.style.breakBefore='page'; el.style.pageBreakBefore='always'; }
       afterHeader=false; firstBlock=false;
     }
