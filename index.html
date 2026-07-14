@@ -450,6 +450,9 @@
     -webkit-tap-highlight-color:transparent;
   }
   .home-tile:active{transform:scale(.97);}
+  .home-tile .tile-drag{font-size:20px;color:#94a3b8;padding:4px 6px;cursor:grab;touch-action:none;flex-shrink:0;user-select:none;-webkit-user-select:none;}
+  .home-tile.dragging{box-shadow:0 6px 20px rgba(29,78,216,.35);transform:scale(1.02);position:relative;z-index:20;}
+  .home-tile.dragging .tile-drag{color:var(--blue,#1d4ed8);}
   .home-tile .tile-icon{font-size:34px;line-height:1;flex-shrink:0;}
   .home-tile .tile-text{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
   .home-tile .tile-name{font-size:15px;font-weight:800;color:var(--ink);}
@@ -920,7 +923,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v51";
+const APP_VERSION = "v52";
 
 /* ============================================================
    モジュール定義
@@ -941,6 +944,8 @@ let currentModule = null;
 let homeApps = []; // [{key, title, icon, color}] - カスタムアプリ
 let builtinOverrides = {}; // {key: {title, icon}} - ビルトインタイルの上書き
 let homeBuiltins = []; // ['tejunsho'] - ホームに表示するビルトインのkey一覧
+let homeOrder = []; // ホーム画面のタイル並び順（key配列、ビルトイン・カスタム混在）
+async function saveHomeOrder(){ try{ await idbSet("meta","homeOrder",homeOrder); }catch(e){} }
 const BUILTIN_DEFS=[{key:"tejunsho",title:"プライム手順書",icon:"📝",desc:"工程・手順の管理",cls:"mod-tejunsho"}];
 async function saveHomeBuiltins(){ try{ await idbSet("meta","homeBuiltins",homeBuiltins); }catch(e){} }
 
@@ -2881,7 +2886,7 @@ $("miExport").onclick=async ()=>{
   const allData={};
   const dataKeys=["data","manual_data",...homeApps.map(a=>`cust_${a.key}`)];
   for(const dk of dataKeys){ try{ const v=await idbGet("meta",dk); if(v) allData[dk]=v; }catch(e){} }
-  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:dataModule||currentModule, homeApps, builtinOverrides, homeBuiltins, data, photos, allData };
+  const bundle={ app:"prime_manual", exportedAt:nowISO(), targetModule:dataModule||currentModule, homeApps, builtinOverrides, homeBuiltins, homeOrder, data, photos, allData };
   const fname=`手順書_${todayStr().replace(/\//g,"")}.json`;
   const blob=new Blob([JSON.stringify(bundle)],{type:"application/json"});
   if(choice==="share" && navigator.share){
@@ -2929,6 +2934,10 @@ $("importInput").addEventListener("change",async e=>{
     if(bundle.builtinOverrides){
       builtinOverrides=bundle.builtinOverrides;
       await idbSet("meta","builtinOverrides",builtinOverrides);
+    }
+    if(bundle.homeOrder){
+      homeOrder=bundle.homeOrder;
+      await saveHomeOrder();
     }
     // 新形式(allData)なら全モジュールのデータをまとめて復元
     if(bundle.allData&&typeof bundle.allData==="object"&&Object.keys(bundle.allData).length){
@@ -3049,14 +3058,23 @@ function renderHome(){
     .filter(b=>homeBuiltins.includes(b.key))
     .map(b=>({...b,title:(builtinOverrides[b.key]?.title||b.title),icon:(builtinOverrides[b.key]?.icon||b.icon),builtin:true}));
   const customs=homeApps.map(a=>({key:a.key,title:a.title,icon:a.icon,desc:"",cls:a.color||"mod-custom-prime",custom:true,appObj:a}));
-  [...builtins,...customs].forEach(app=>{
+  const tiles=[...builtins,...customs];
+  if(homeOrder.length){
+    tiles.sort((a,b)=>{
+      const ia=homeOrder.indexOf(a.key), ib=homeOrder.indexOf(b.key);
+      return (ia<0?9999:ia)-(ib<0?9999:ib);
+    });
+  }
+  tiles.forEach(app=>{
     const btn=document.createElement("button");
     btn.className=`home-tile ${app.cls}${(app.custom||app.builtin)?" editable":""}`;
     btn.dataset.module=app.key;
-    btn.innerHTML=`<span class="tile-icon">${app.icon}</span><div class="tile-text"><span class="tile-name">${escapeHtml(app.title)}</span>${app.desc?`<span class="tile-desc">${app.desc}</span>`:''}</div><span class="tile-edit-badge">✏️</span>`;
+    btn.innerHTML=`${homeEditMode?'<span class="tile-drag" data-drag>≡</span>':''}<span class="tile-icon">${app.icon}</span><div class="tile-text"><span class="tile-name">${escapeHtml(app.title)}</span>${app.desc?`<span class="tile-desc">${app.desc}</span>`:''}</div><span class="tile-edit-badge">✏️</span>`;
     if(homeEditMode){
-      if(app.custom) btn.onclick=e=>{ e.stopPropagation(); openAddAppSheet(app.appObj); };
-      else if(app.builtin) btn.onclick=e=>{ e.stopPropagation(); openAddAppSheet(null,app.key,app.title,app.icon); };
+      if(app.custom) btn.onclick=e=>{ e.stopPropagation(); if(_homeJustDragged) return; openAddAppSheet(app.appObj); };
+      else if(app.builtin) btn.onclick=e=>{ e.stopPropagation(); if(_homeJustDragged) return; openAddAppSheet(null,app.key,app.title,app.icon); };
+      const h=btn.querySelector("[data-drag]");
+      if(h) h.addEventListener("pointerdown",e=>homeTileDragStart(e,btn));
     }
     grid.appendChild(btn);
   });
@@ -3072,6 +3090,43 @@ function renderHome(){
 }
 
 $("homeEditBtn").onclick=()=>{ homeEditMode=!homeEditMode; renderHome(); };
+
+/* ホームタイルの並び替え（編集モードで≡をドラッグ） */
+let _homeDrag=null,_homeJustDragged=false;
+function homeTileDragStart(e,tile){
+  e.preventDefault(); e.stopPropagation();
+  const grid=$("homeGrid");
+  _homeDrag={tile,grid};
+  tile.classList.add("dragging");
+  const move=ev=>{
+    if(!_homeDrag) return;
+    ev.preventDefault();
+    const y=ev.clientY;
+    const others=[...grid.querySelectorAll(".home-tile")].filter(t=>t!==tile);
+    for(const t of others){
+      const box=t.getBoundingClientRect();
+      if(y>box.top&&y<box.bottom){
+        if(y<box.top+box.height/2) grid.insertBefore(tile,t);
+        else grid.insertBefore(tile,t.nextSibling);
+        break;
+      }
+    }
+  };
+  const up=()=>{
+    document.removeEventListener("pointermove",move);
+    document.removeEventListener("pointerup",up);
+    document.removeEventListener("pointercancel",up);
+    if(!_homeDrag) return;
+    _homeDrag.tile.classList.remove("dragging");
+    homeOrder=[...grid.querySelectorAll(".home-tile")].map(t=>t.dataset.module);
+    saveHomeOrder();
+    _homeDrag=null;
+    _homeJustDragged=true; setTimeout(()=>{ _homeJustDragged=false; },350);
+  };
+  document.addEventListener("pointermove",move,{passive:false});
+  document.addEventListener("pointerup",up);
+  document.addEventListener("pointercancel",up);
+}
 $("homeMenuBtn").onclick=()=>{ $("appVersionLabel").textContent="アプリバージョン："+APP_VERSION; showSheet("menuSheet"); };
 
 function showHome(){
@@ -3817,6 +3872,7 @@ async function exportToPptx(proc,sub,mod){
     }
     homeApps=await idbGet("meta","homeApps")||[];
     builtinOverrides=await idbGet("meta","builtinOverrides")||{};
+    homeOrder=await idbGet("meta","homeOrder")||[];
     // v2: 旧移行データを強制リセット（意図せずprimeが表示される問題を防ぐ）
     const builtinsVer=await idbGet("meta","homeBuiltinsVer");
     if(builtinsVer!==2){
