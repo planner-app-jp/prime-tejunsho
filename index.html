@@ -487,6 +487,10 @@
   .plog-title-bar{display:block;text-align:center;padding:1.5mm 0 2mm;border-bottom:1pt solid #777;margin-bottom:4mm;position:relative;}
   .plog-title-name{display:block;font-size:16pt;font-weight:700;letter-spacing:.06em;line-height:1.2;}
   .plog-title-date{display:block;font-size:9pt;font-weight:400;color:#555;margin-top:0;text-align:right;position:absolute;right:0;bottom:1mm;}
+  /* thead内タイトル行(全ページに再掲・上に余白/表とは詰める) */
+  .pst th.pst-title-cell{border:none;background:#fff;padding:5mm 0 1mm;position:relative;text-align:center;}
+  .pst .pst-doc-title{font-size:16pt;font-weight:700;letter-spacing:.06em;line-height:1.2;}
+  .pst .pst-doc-date{position:absolute;right:0;bottom:1mm;font-size:9pt;color:#555;font-weight:400;}
   .plog-subtab-header{font-size:11pt;font-weight:700;background:#eef2f7;padding:2mm 3mm;margin:3mm 0 2mm;border-left:3pt solid #1f6feb;}
   /* ===== 表形式印刷(案A: 作業標準書スタイル) ===== */
   .pst{width:100%;border-collapse:collapse;margin-bottom:4mm;}
@@ -923,7 +927,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v54";
+const APP_VERSION = "v55";
 
 /* ============================================================
    モジュール定義
@@ -3340,9 +3344,8 @@ async function getPhotoWithAnnos(photoId,annotations){
 async function buildPrintDom(p, inputDate){
   const appName=$("appTitle").textContent||"手順書";
   const els=[];
-  const tbar=document.createElement('div'); tbar.className='plog-title-bar';
-  tbar.innerHTML=`<span class="plog-title-name">${escapeHtml(p.name)}</span><span class="plog-title-date">作成日：${escapeHtml(inputDate)}</span>`;
-  els.push(tbar);
+  // タイトル+作成日はtheadに入れる(印刷/PDFとも2ページ目以降にも自動で再掲される)
+  const titleRow=`<tr class="pst-title-tr"><th colspan="3" class="pst-title-cell"><span class="pst-doc-title">${escapeHtml(p.name)}</span><span class="pst-doc-date">作成日：${escapeHtml(inputDate)}</span></th></tr>`;
 
   const subtabs=p.subtabs||[];
   for(const s of subtabs){
@@ -3351,7 +3354,7 @@ async function buildPrintDom(p, inputDate){
       sh.textContent=s.name||''; els.push(sh);
     }
     const table=document.createElement('table'); table.className='pst';
-    table.innerHTML='<thead><tr><th class="pst-no">No</th><th class="pst-pic">写真</th><th>内容</th></tr></thead>';
+    table.innerHTML=`<thead>${titleRow}<tr><th class="pst-no">No</th><th class="pst-pic">写真</th><th>内容</th></tr></thead>`;
     const tbody=document.createElement('tbody');
     let no=0;
     for(const st of (s.steps||[])){
