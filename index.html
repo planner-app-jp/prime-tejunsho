@@ -920,7 +920,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v50";
+const APP_VERSION = "v51";
 
 /* ============================================================
    モジュール定義
@@ -1927,7 +1927,7 @@ async function handlePhotoFile(file, saveOriginal){
   if(!file||!pendingPhotoTarget) return;
   toast("画像を処理中…");
   try{
-    const dataUrl=await compressImage(file,1400,0.72);
+    const dataUrl=await compressImage(file,1800,0.85);
     if(saveOriginal) saveOriginalToDevice(dataUrl);
     const {st,sub}=pendingPhotoTarget;
     const pid=st.photoId||uid();
@@ -2089,7 +2089,7 @@ $("cropConfirm").onclick=()=>{
   const {img,cx,cy,cw,ch}=cropCtx;
   const cv2=document.createElement("canvas"); cv2.width=cw; cv2.height=ch;
   cv2.getContext("2d").drawImage(img,cx,cy,cw,ch,0,0,cw,ch);
-  const url=cv2.toDataURL("image/jpeg",0.82);
+  const url=cv2.toDataURL("image/jpeg",0.9);
   $("cropOverlay").style.display="none";
   if(cropCtx.onConfirm) cropCtx.onConfirm(url);
 };
@@ -3437,9 +3437,9 @@ async function exportPdf(p){
     const { jsPDF }=window.jspdf;
     const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
     for(let i=0;i<pages.length;i++){
-      const canvas=await html2canvas(pages[i],{scale:2,backgroundColor:'#ffffff',logging:false});
+      const canvas=await html2canvas(pages[i],{scale:3,backgroundColor:'#ffffff',logging:false});
       if(i>0) pdf.addPage();
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.9),'JPEG',0,0,210,297);
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297);
     }
     host.remove(); host=null;
 
