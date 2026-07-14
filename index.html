@@ -734,8 +734,8 @@
   <div class="sheet">
     <div class="sheet-grip"></div>
     <div class="sheet-head"><h3>メニュー</h3><button class="close" data-close>×</button></div>
-    <button class="menu-item" id="miPrint" style="display:none;"><span class="ic">🖨️</span><span>印刷する／レイアウト確認<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">手順書を印刷、またはレイアウトを事前確認できます</span></span></button>
     <button class="menu-item" id="miPdfExport" style="display:none;"><span class="ic">📄</span><span>スマホから印刷／PDFに保存・共有<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">URL・日付なしのA4 PDFを作成し、共有からエプソン等のプリンタで印刷できます</span></span></button>
+    <button class="menu-item" id="miPrint" style="display:none;"><span class="ic">🖨️</span><span>印刷する／レイアウト確認<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">手順書を印刷、またはレイアウトを事前確認できます</span></span></button>
     <button class="menu-item" id="miExport"><span class="ic">💾</span><span>データを保存する<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">全工程をJSONで書き出し。バックアップや機種変更のときに使う</span></span></button>
     <div class="menu-section-lbl">インポート</div>
     <button class="menu-item" id="miMerge"><span class="ic">➕</span><span>工程を追加する<span style="display:block;font-size:11px;color:#94a3b8;font-weight:400;margin-top:2px;">受け取ったJSONを追加。今のデータはそのまま残る</span></span></button>
@@ -920,7 +920,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v49";
+const APP_VERSION = "v50";
 
 /* ============================================================
    モジュール定義
@@ -3286,7 +3286,7 @@ async function buildPrintDom(p, inputDate){
   const appName=$("appTitle").textContent||"手順書";
   const els=[];
   const tbar=document.createElement('div'); tbar.className='plog-title-bar';
-  tbar.innerHTML=`<span class="plog-title-name">${escapeHtml(p.name)}</span><span class="plog-title-date">更新日：${escapeHtml(inputDate)}</span>`;
+  tbar.innerHTML=`<span class="plog-title-name">${escapeHtml(p.name)}</span><span class="plog-title-date">作成日：${escapeHtml(inputDate)}</span>`;
   els.push(tbar);
 
   const subtabs=p.subtabs||[];
@@ -3350,7 +3350,7 @@ async function buildPrintDom(p, inputDate){
 // 表形式で印刷(ブラウザの印刷機能)
 async function printPhotoLog(p){
   const defaultDate=fmtDate(p.updatedAt||data.updatedAt);
-  const inputDate=prompt("更新日を入力してください（変更可）",defaultDate);
+  const inputDate=prompt("作成日を入力してください（変更可）",defaultDate);
   if(inputDate===null) return;
   const plogEl=$("plogContainer");
   plogEl.innerHTML='';
@@ -3384,7 +3384,7 @@ async function loadPdfLibs(){
 
 async function exportPdf(p){
   const defaultDate=fmtDate(p.updatedAt||data.updatedAt);
-  const inputDate=prompt("更新日を入力してください（変更可）",defaultDate);
+  const inputDate=prompt("作成日を入力してください（変更可）",defaultDate);
   if(inputDate===null) return;
   toast("PDFを作成中…しばらくお待ちください");
   let host=null;
