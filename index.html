@@ -927,7 +927,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v55";
+const APP_VERSION = "v56";
 
 /* ============================================================
    モジュール定義
@@ -3353,12 +3353,23 @@ async function buildPrintDom(p, inputDate){
       const sh=document.createElement('div'); sh.className='plog-subtab-header';
       sh.textContent=s.name||''; els.push(sh);
     }
-    const table=document.createElement('table'); table.className='pst';
-    table.innerHTML=`<thead>${titleRow}<tr><th class="pst-no">No</th><th class="pst-pic">写真</th><th>内容</th></tr></thead>`;
-    const tbody=document.createElement('tbody');
+    // 3手順ごとに表を分割して明示的に改ページ
+    // (iOSのブラウザ印刷はtrのbreak-inside:avoidを無視して行を途中で切るため)
+    const makeTable=()=>{
+      const t=document.createElement('table'); t.className='pst';
+      t.innerHTML=`<thead>${titleRow}<tr><th class="pst-no">No</th><th class="pst-pic">写真</th><th>内容</th></tr></thead>`;
+      const tb=document.createElement('tbody');
+      t.appendChild(tb);
+      return {t,tb};
+    };
+    let cur=makeTable();
+    els.push(cur.t);
+    const tbodyOf=()=>cur.tb;
     let no=0;
     for(const st of (s.steps||[])){
+      if(no>0 && no%3===0){ cur=makeTable(); els.push(cur.t); }
       no++;
+      const tbody=tbodyOf();
       const tr=document.createElement('tr');
       const tdNo=document.createElement('td'); tdNo.className='pst-no'; tdNo.textContent=no;
       const tdPic=document.createElement('td'); tdPic.className='pst-pic';
@@ -3399,8 +3410,18 @@ async function buildPrintDom(p, inputDate){
       tr.appendChild(tdNo); tr.appendChild(tdPic); tr.appendChild(tdTxt);
       tbody.appendChild(tr);
     }
-    table.appendChild(tbody);
-    els.push(table);
+  }
+  // 2つ目以降の表に明示的な改ページを付与(サブタブ見出しの直後の表は見出し側に付ける)
+  let firstBlock=true, afterHeader=false;
+  for(const el of els){
+    if(el.classList&&el.classList.contains('plog-subtab-header')){
+      if(!firstBlock){ el.style.breakBefore='page'; el.style.pageBreakBefore='always'; }
+      afterHeader=true; firstBlock=false; continue;
+    }
+    if(el.tagName==='TABLE'){
+      if(!firstBlock&&!afterHeader){ el.style.breakBefore='page'; el.style.pageBreakBefore='always'; }
+      afterHeader=false; firstBlock=false;
+    }
   }
   return els;
 }
