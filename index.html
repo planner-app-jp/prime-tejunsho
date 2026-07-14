@@ -491,10 +491,15 @@
   .pst td{border:0.6pt solid #9aa0a6;padding:1.5mm 2mm;vertical-align:top;font-size:10pt;line-height:1.55;}
   .pst tr{break-inside:avoid;page-break-inside:avoid;}
   .pst .pst-no{width:8mm;text-align:center;font-weight:700;font-size:11pt;}
+  /* 行の高さをA4の1/3に固定(84mm) → 写真3枚でちょうど1ページに収まる */
   .pst .pst-pic{width:85mm;padding:1.2mm;}
-  .pst .pst-pic img{width:100%;height:auto;display:block;}
-  .pst .pst-subpic{margin-top:1.5mm;}
-  .pst .pst-subpic-cap{font-size:7.5pt;color:#555;text-align:right;line-height:1.2;}
+  .pst td.pst-pic{height:84mm;box-sizing:border-box;}
+  .pst .pst-picbox{height:100%;display:flex;flex-direction:column;gap:1mm;min-height:0;}
+  .pst .pst-picbox img{width:100%;flex:1 1 0;min-height:0;object-fit:contain;display:block;}
+  .pst .pst-subpic{flex:1 1 0;min-height:0;display:flex;flex-direction:column;margin-top:0;}
+  .pst .pst-subpic-cap{font-size:7.5pt;color:#555;text-align:right;line-height:1.2;flex:0 0 auto;}
+  .pst td.pst-txt{height:84mm;box-sizing:border-box;}
+  .pst .pst-txtbox{height:100%;overflow:hidden;}
   .pst .pst-title{font-weight:700;margin-bottom:1mm;}
   .pst .pst-sub{margin-top:1.5mm;padding-left:2mm;border-left:1.5pt solid #111;font-size:9pt;
     display:flex;gap:1.5mm;align-items:flex-start;}
@@ -915,7 +920,7 @@
   }
 })();
 const $ = id => document.getElementById(id);
-const APP_VERSION = "v46";
+const APP_VERSION = "v47";
 
 /* ============================================================
    モジュール定義
@@ -3299,13 +3304,15 @@ async function buildPrintDom(p, inputDate){
       const tr=document.createElement('tr');
       const tdNo=document.createElement('td'); tdNo.className='pst-no'; tdNo.textContent=no;
       const tdPic=document.createElement('td'); tdPic.className='pst-pic';
+      const picBox=document.createElement('div'); picBox.className='pst-picbox'; tdPic.appendChild(picBox);
       const tdTxt=document.createElement('td'); tdTxt.className='pst-txt';
+      const txtBox=document.createElement('div'); txtBox.className='pst-txtbox'; tdTxt.appendChild(txtBox);
       if(st.photoId&&photoCache[st.photoId]){
         const src=await getPhotoWithAnnos(st.photoId,st.annotations||[]);
-        if(src){ const im=document.createElement('img'); im.src=src; tdPic.appendChild(im); }
+        if(src){ const im=document.createElement('img'); im.src=src; picBox.appendChild(im); }
       }
-      if(st.title){ const t=document.createElement('div'); t.className='pst-title'; t.textContent=st.title; tdTxt.appendChild(t); }
-      if(st.text){ const t=document.createElement('div'); t.innerHTML=textToDisplay(st.text); tdTxt.appendChild(t); }
+      if(st.title){ const t=document.createElement('div'); t.className='pst-title'; t.textContent=st.title; txtBox.appendChild(t); }
+      if(st.text){ const t=document.createElement('div'); t.innerHTML=textToDisplay(st.text); txtBox.appendChild(t); }
       let si=0;
       for(const ss of (st.subSteps||[])){
         si++;
@@ -3318,7 +3325,7 @@ async function buildPrintDom(p, inputDate){
           if(ss.title) inner+='<b>'+escapeHtml(ss.title)+'</b>　';
           if(ss.text) inner+=textToDisplay(ss.text);
           bd.innerHTML=inner; box.appendChild(bd);
-          tdTxt.appendChild(box);
+          txtBox.appendChild(box);
         }
         if(ss.photoId&&photoCache[ss.photoId]){
           const src=await getPhotoWithAnnos(ss.photoId,ss.annotations||[]);
@@ -3327,7 +3334,7 @@ async function buildPrintDom(p, inputDate){
             const im=document.createElement('img'); im.src=src;
             const cap=document.createElement('div'); cap.className='pst-subpic-cap'; cap.textContent='▲ '+no+'-'+si;
             wrap.appendChild(im); wrap.appendChild(cap);
-            tdPic.appendChild(wrap);
+            picBox.appendChild(wrap);
           }
         }
       }
